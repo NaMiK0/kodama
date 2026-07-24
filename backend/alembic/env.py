@@ -9,9 +9,10 @@ from alembic import context
 from app.core.config import settings
 from app.core.database import Base
 
-# Импорт ради побочного эффекта: регистрирует таблицы модуля в Base.metadata.
+# Импорт ради побочного эффекта: регистрирует таблицы модулей в Base.metadata.
 # Каждую НОВУЮ модель нужно добавлять сюда, иначе Alembic её "не увидит".
-from app.modules.auth import models  # noqa: F401
+from app.modules.auth import models as _auth_models  # noqa: F401
+from app.modules.decks import models as _deck_models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
