@@ -2,8 +2,10 @@ from datetime import datetime
 
 from enum import StrEnum
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.decks.enums import DeckSource, Language, Level
@@ -14,6 +16,10 @@ def _str_enum(enum_cls: type[StrEnum]) -> Enum:
         native_enum=False,
         values_callable=lambda e: [m.value for m in e]
     )
+
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
+    from app.modules.cards.models import Card
 
 class Deck(Base):
     __tablename__ = "decks"
@@ -33,6 +39,13 @@ class Deck(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped["User"] = relationship(back_populates="decks")
+    cards: Mapped[list["Card"]] = relationship(
+        back_populates="deck",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     __table_args__ = (

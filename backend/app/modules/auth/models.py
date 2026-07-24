@@ -1,9 +1,15 @@
 from datetime import datetime
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import CheckConstraint, DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.modules.decks.models import Deck
+
 
 class User(Base):
     __tablename__ = "users"
@@ -25,6 +31,12 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now()
         )
+
+    decks: Mapped[list["Deck"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     __table_args__ = (
         CheckConstraint(

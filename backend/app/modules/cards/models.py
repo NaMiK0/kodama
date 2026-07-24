@@ -1,11 +1,16 @@
 from datetime import datetime
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import DateTime, ForeignKey, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
+
+if TYPE_CHECKING:
+    from app.modules.decks.models import Deck
 
 class Card(Base):
     __tablename__ = "cards"
@@ -30,3 +35,5 @@ class Card(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    deck: Mapped["Deck"] = relationship(back_populates="cards")
