@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
 
+    # ── Redis ──
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+
     @property
     def rabbitmq_url(self) -> str:
         return (

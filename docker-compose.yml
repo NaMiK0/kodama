@@ -35,6 +35,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: kodama-redis
+    ports:
+      - "${REDIS_PORT}:6379"     # 6380 на хосте, чтобы не конфликтовать с booking
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
   kodama-pgdata:
   kodama-rabbitmq-data:

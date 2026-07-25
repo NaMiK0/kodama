@@ -27,7 +27,7 @@ def submit_review(
 def due_cards(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[Card]:
+) -> list[card_schemas.CardRead]:
     return service.get_due_cards(db, current_user.id)
 
 

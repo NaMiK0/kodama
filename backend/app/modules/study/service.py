@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import json
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -7,6 +8,14 @@ from app.modules.cards.models import Card
 from app.modules.decks.models import Deck
 from app.modules.study.models import UserCardProgress
 from app.modules.study.sm2 import INITIAL_EASE_FACTOR, sm2
+from app.modules.cards.schemas import CardRead
+from app.core.redis import get_redis
+
+_DUE_CACHE_TTL = 300  # секунд
+
+
+def _due_cache_key(user_id: int) -> str:
+    return f"study:due:{user_id}"
 
 class CardNotFoundError(Exception):
     """Карточка не найдена или принадлежит другому пользователю."""
@@ -49,11 +58,27 @@ def submit_review(
 
     db.commit()
     db.refresh(progress)
+    
+    try:
+        get_redis().delete(_due_cache_key(user_id))
+    except Exception:
+        pass
+
     return progress
 
-def get_due_cards(db: Session, user_id: int) -> list[Card]:
+def get_due_cards(db: Session, user_id: int) -> list[CardRead]:
+    redis = get_redis()
+    key = _due_cache_key(user_id)
+
+    try:
+        cached = redis.get(key)
+    except Exception:
+        cached = None  # Redis недоступен — тихо идём в БД
+    if cached is not None:
+        return [CardRead.model_validate(item) for item in json.loads(cached)]
+
     today = date.today()
-    return list(
+    cards = list(
         db.scalars(
             select(Card)
             .join(UserCardProgress, UserCardProgress.card_id == Card.id)
@@ -63,6 +88,18 @@ def get_due_cards(db: Session, user_id: int) -> list[Card]:
             )
         )
     )
+    result = [CardRead.model_validate(c) for c in cards]
+
+    try:
+        redis.set(
+            key,
+            json.dumps([r.model_dump(mode="json") for r in result]),
+            ex=_DUE_CACHE_TTL,
+        )
+    except Exception:
+        pass  # не смогли закешировать — не критично
+
+    return result
 
 def get_new_cards(db: Session, user_id: int) -> list[Card]:
     reviewed = select(UserCardProgress.card_id).where(
