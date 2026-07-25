@@ -1,8 +1,11 @@
 from pwdlib import PasswordHash
 
 from datetime import datetime, timedelta, timezone
-import jwt
 from app.core.config import settings
+
+import jwt
+import hashlib
+import secrets
 
 _password_hasher = PasswordHash.recommended()
 
@@ -28,3 +31,10 @@ def decode_access_token(token: str) -> str | None:
         return None
 
     return payload.get("sub")
+
+def generate_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()

@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
 
+    # ── SMTP (email) ──
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str
+    smtp_password: str
+    email_backend: str = "console"
+
+    # ── Password reset ──
+    reset_token_expire_minutes: int = 60
+    frontend_base_url: str = "http://localhost:5173"
+
     # ── Redis ──
     redis_host: str = "localhost"
     redis_port: int = 6379
