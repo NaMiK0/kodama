@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from app.modules.ai.enums import JobStatus
 from app.modules.ai.models import GenerationJob
-from app.modules.ai.queue import publish_generation_job
+from app.modules.ai.queue import publish_generation_job, publish_notification
 from app.modules.ai import schemas
 from app.modules.ai.provider import LLMProvider
 from app.modules.cards.models import Card
@@ -123,7 +123,9 @@ def get_job(db: Session, user_id: int, job_id: int) -> GenerationJob:
 def process_job(db: Session, provider: LLMProvider, job_id: int) -> None:
     job = db.get(GenerationJob, job_id)
     if job is None:
-        return # задача исчезла (например, пользователь удалён) — пропускаем
+        return  # задача исчезла — пропускаем
+
+    user_id = job.user_id
     job.status = JobStatus.PROCESSING
     db.commit()
 
@@ -134,15 +136,17 @@ def process_job(db: Session, provider: LLMProvider, job_id: int) -> None:
             level=job.level,
             count=job.count,
         )
-        deck = generate_deck(db, job.user_id, provider, request)
+        deck = generate_deck(db, user_id, provider, request)
     except Exception as e:
-        db.rollback()  #откатываем недоделанную колоду
-        job = db.get(GenerationJob, job_id) # после rollback берём job заново
+        db.rollback()
+        job = db.get(GenerationJob, job_id)
         job.status = JobStatus.FAILED
         job.error = str(e)[:1000]
         db.commit()
+        publish_notification(user_id, job_id, JobStatus.FAILED, None)
         return
 
     job.status = JobStatus.DONE
     job.deck_id = deck.id
     db.commit()
+    publish_notification(user_id, job_id, JobStatus.DONE, deck.id)
