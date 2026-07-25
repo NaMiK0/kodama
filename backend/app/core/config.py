@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    # ── LLM / OpenRouter ──
+    openrouter_api_key: str
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    llm_model: str = "inclusionai/ling-3.0-flash:free"
+
     @property
     def database_url(self) -> str:
         """URL подключения для SQLAlchemy. Драйвер psycopg (v3) — часть +psycopg."""
