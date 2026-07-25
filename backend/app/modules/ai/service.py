@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
+from app.core.redis import get_redis
 from app.modules.ai.enums import JobStatus
 from app.modules.ai.models import GenerationJob
 from app.modules.ai.queue import publish_generation_job, publish_notification
@@ -54,14 +55,54 @@ def _parse_cards(raw: str) -> list[schemas.GeneratedCard]:
     return cards
 
 
+_GEN_CACHE_TTL = 86400  # секунд (сутки): сгенерированная лексика по теме стабильна
+
+
+def _gen_cache_key(request: schemas.GenerateDeckRequest) -> str:
+    topic = request.topic.strip().lower()
+    return (
+        f"ai:gen:{request.language.value}:{request.level.value}"
+        f":{request.count}:{topic}"
+    )
+
+
+def _get_or_generate_cards(
+    provider: LLMProvider, request: schemas.GenerateDeckRequest
+) -> list[schemas.GeneratedCard]:
+    redis = get_redis()
+    key = _gen_cache_key(request)
+
+    try:
+        cached = redis.get(key)
+    except Exception:
+        cached = None  # Redis недоступен — просто генерим
+    if cached is not None:
+        return [
+            schemas.GeneratedCard.model_validate(item) for item in json.loads(cached)
+        ]
+
+    raw = provider.complete(_SYSTEM_PROMPT, _build_user_prompt(request))
+    generated = _parse_cards(raw)
+
+    try:
+        redis.set(
+            key,
+            json.dumps([gc.model_dump() for gc in generated]),
+            ex=_GEN_CACHE_TTL,
+        )
+    except Exception:
+        pass  # не закешировали — не критично
+
+    return generated
+
+
 def generate_deck(
     db: Session,
     user_id: int,
     provider: LLMProvider,
     request: schemas.GenerateDeckRequest,
 ) -> Deck:
-    raw = provider.complete(_SYSTEM_PROMPT, _build_user_prompt(request))
-    generated = _parse_cards(raw)
+    generated = _get_or_generate_cards(provider, request)
 
     deck = Deck(
         user_id=user_id,
