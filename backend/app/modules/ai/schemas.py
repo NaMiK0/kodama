@@ -1,5 +1,8 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.modules.ai.enums import JobStatus
 from app.modules.cards.schemas import CardRead
 from app.modules.decks.schemas import DeckCreate, DeckRead
 
@@ -17,3 +20,12 @@ class GeneratedCard(BaseModel):
 class GeneratedDeckResponse(BaseModel):
     deck: DeckRead
     cards: list[CardRead]
+
+class JobRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: JobStatus
+    deck_id: int | None
+    error: str | None
+    created_at: datetime

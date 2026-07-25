@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     llm_model: str = "inclusionai/ling-3.0-flash:free"
 
+    # ── RabbitMQ ──
+    rabbitmq_user: str
+    rabbitmq_password: str
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = 5672
+
+    @property
+    def rabbitmq_url(self) -> str:
+        return (
+            f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}"
+            f"@{self.rabbitmq_host}:{self.rabbitmq_port}/"
+        )
+
     @property
     def database_url(self) -> str:
         """URL подключения для SQLAlchemy. Драйвер psycopg (v3) — часть +psycopg."""

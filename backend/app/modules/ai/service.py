@@ -2,7 +2,11 @@ import json
 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
+from app.modules.ai.enums import JobStatus
+from app.modules.ai.models import GenerationJob
+from app.modules.ai.queue import publish_generation_job
 from app.modules.ai import schemas
 from app.modules.ai.provider import LLMProvider
 from app.modules.cards.models import Card
@@ -81,3 +85,64 @@ def generate_deck(
     db.commit()
     db.refresh(deck)
     return deck
+
+
+class JobNotFoundError(Exception):
+    """Задача генерации не найдена или принадлежит другому пользователю."""
+
+
+def create_job(
+    db: Session, user_id: int, request: schemas.GenerateDeckRequest
+) -> GenerationJob:
+    job = GenerationJob(
+        user_id=user_id,
+        status=JobStatus.PENDING,
+        topic=request.topic,
+        language=request.language,
+        level=request.level,
+        count=request.count,
+    )
+    db.add(job)
+    db.commit()          # сначала фиксируем job в БД...
+    db.refresh(job)
+    publish_generation_job(job.id)   # ...и только потом публикуем
+    return job
+
+
+def get_job(db: Session, user_id: int, job_id: int) -> GenerationJob:
+    job = db.scalar(
+        select(GenerationJob).where(
+            GenerationJob.id == job_id,
+            GenerationJob.user_id == user_id,
+        )
+    )
+    if job is None:
+        raise JobNotFoundError(job_id)
+    return job
+
+def process_job(db: Session, provider: LLMProvider, job_id: int) -> None:
+    job = db.get(GenerationJob, job_id)
+    if job is None:
+        return # задача исчезла (например, пользователь удалён) — пропускаем
+    job.status = JobStatus.PROCESSING
+    db.commit()
+
+    try:
+        request = schemas.GenerateDeckRequest(
+            topic=job.topic,
+            language=job.language,
+            level=job.level,
+            count=job.count,
+        )
+        deck = generate_deck(db, job.user_id, provider, request)
+    except Exception as e:
+        db.rollback()  #откатываем недоделанную колоду
+        job = db.get(GenerationJob, job_id) # после rollback берём job заново
+        job.status = JobStatus.FAILED
+        job.error = str(e)[:1000]
+        db.commit()
+        return
+
+    job.status = JobStatus.DONE
+    job.deck_id = deck.id
+    db.commit()
