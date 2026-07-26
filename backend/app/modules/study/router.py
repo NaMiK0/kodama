@@ -17,9 +17,18 @@ def submit_review(
     data: schemas.ReviewRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> UserCardProgress:
+    provider: LLMProvider = Depends(get_llm_provider),
+) -> schemas.ReviewResult:
     try:
-        return service.submit_review(db, current_user.id, data.card_id, data.quality)
+        return service.submit_review(
+            db,
+            provider,
+            current_user.id,
+            data.card_id,
+            data.answer,
+            data.direction,
+            data.pronunciation_score,
+        )
     except service.CardNotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Карточка не найдена")
 

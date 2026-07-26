@@ -13,6 +13,7 @@ from app.core.redis import get_redis
 from app.modules.ai.provider import LLMProvider
 from app.modules.decks.enums import Language
 from app.modules.study import schemas
+from app.modules.study.grading import composite_quality
 from app.modules.study.answers import (
     AnswerDirection,
     MatchKind,
@@ -36,12 +37,18 @@ def _get_owned_card(db: Session, user_id: int, card_id: int) -> Card:
     return card
 
 def submit_review(
-        db: Session,
-        user_id: int,
-        card_id: int,
-        quality: int
-) -> UserCardProgress:
-    _get_owned_card(db, user_id, card_id) #проверка владения
+    db: Session,
+    provider: LLMProvider,
+    user_id: int,
+    card_id: int,
+    answer: str,
+    direction: AnswerDirection,
+    pronunciation_score: float | None = None,
+) -> schemas.ReviewResult:
+    # Оценку считает СЕРВЕР: сначала проверяем ответ, потом выводим quality.
+    # check_answer заодно проверяет владение карточкой.
+    verdict = check_answer(db, provider, user_id, card_id, answer, direction)
+    quality = composite_quality(verdict.kind, pronunciation_score)
 
     progress = db.scalar(select(UserCardProgress).where(UserCardProgress.user_id == user_id, UserCardProgress.card_id == card_id))
 
@@ -73,7 +80,17 @@ def submit_review(
     except Exception:
         pass
 
-    return progress
+    return schemas.ReviewResult(
+        card_id=card_id,
+        correct=verdict.correct,
+        kind=verdict.kind,
+        expected=verdict.expected,
+        quality=quality,
+        repetitions=progress.repetitions,
+        interval=progress.interval,
+        ease_factor=progress.ease_factor,
+        next_review_date=progress.next_review_date,
+    )
 
 def get_due_cards(db: Session, user_id: int) -> list[CardRead]:
     redis = get_redis()
@@ -183,7 +200,11 @@ def check_answer(
         expected = [card.translation]
         allow_fuzzy = True
     else:
-        expected = [card.word, card.reference, *card.accepted_answers]
+        # dict.fromkeys убирает дубли, сохраняя порядок
+        # (у английского word и reference совпадают)
+        expected = list(
+            dict.fromkeys([card.word, card.reference, *card.accepted_answers])
+        )
         # для японского опечатка неотличима от другого слова — только точное
         allow_fuzzy = card.deck.language != Language.JA
 
