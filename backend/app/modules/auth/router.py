@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
+from app.modules.auth import oauth
 from app.core.email import EmailSender, get_email_sender
 from app.modules.auth import schemas, service
 from app.modules.auth.models import User
@@ -75,3 +78,34 @@ def reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ссылка недействительна или истекла",
         )
+
+@router.get("/google/login")
+def google_login() -> RedirectResponse:
+    """Шаг 1: отправляем пользователя на экран согласия Google."""
+    state = oauth.create_state()
+    return RedirectResponse(oauth.build_authorization_url(state))
+
+
+@router.get("/google/callback")
+def google_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db),
+) -> RedirectResponse:
+    """Шаг 2: Google вернул код — меняем его на профиль и выдаём НАШ JWT."""
+    if not oauth.consume_state(state):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Некорректный или устаревший state",
+        )
+
+    try:
+        email, google_id = oauth.fetch_google_user(code)
+    except oauth.OAuthError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+    user = service.authenticate_google_user(db, email, google_id)
+    access_token = create_access_token(subject=str(user.id))
+    return RedirectResponse(
+        f"{settings.frontend_base_url}/auth/callback?token={access_token}"
+    )

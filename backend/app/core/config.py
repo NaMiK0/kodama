@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     reset_token_expire_minutes: int = 60
     frontend_base_url: str = "http://localhost:5173"
 
+    # ── Google OAuth ──
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str = "http://localhost:8000/auth/google/callback"
+
     # ── Redis ──
     redis_host: str = "localhost"
     redis_port: int = 6379

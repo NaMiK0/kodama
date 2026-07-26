@@ -6,6 +6,7 @@ dependencies = [
     "aio-pika>=10.0.1",
     "alembic>=1.18.5",
     "fastapi>=0.139.2",
+    "httpx>=0.28.1",
     "openai>=2.48.0",
     "pika>=1.4.2",
     "psycopg[binary]>=3.3.4",

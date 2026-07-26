@@ -79,3 +79,21 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
     user.reset_token_hash = None          # токен одноразовый — гасим
     user.reset_token_expires_at = None
     db.commit()
+
+def authenticate_google_user(db: Session, email: str, google_id: str) -> User:
+    """Находит пользователя по google_id, либо связывает существующий
+    аккаунт с тем же email, либо создаёт нового (без пароля)."""
+    user = db.scalar(select(User).where(User.google_id == google_id))
+    if user is not None:
+        return user
+
+    user = db.scalar(select(User).where(User.email == email.lower()))
+    if user is not None:
+        user.google_id = google_id  # связываем: раньше входил по паролю
+    else:
+        user = User(email=email.lower(), google_id=google_id)
+        db.add(user)
+
+    db.commit()
+    db.refresh(user)
+    return user
