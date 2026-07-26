@@ -1,5 +1,7 @@
 from datetime import date
 
+from app.modules.study.answers import AnswerDirection
+
 from pydantic import BaseModel, ConfigDict, Field
 
 class ReviewRequest(BaseModel):
@@ -15,3 +17,14 @@ class ReviewResult(BaseModel):
     interval: int
     ease_factor: float
     next_review_date: date
+
+class AnswerCheckRequest(BaseModel):
+    card_id: int
+    answer: str
+    direction: AnswerDirection
+
+
+class AnswerCheckResult(BaseModel):
+    correct: bool
+    kind: str            # exact | fuzzy | llm | incorrect
+    expected: list[str]  # чтобы UI мог показать правильный ответ

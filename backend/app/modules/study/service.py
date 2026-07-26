@@ -10,6 +10,15 @@ from app.modules.study.models import UserCardProgress
 from app.modules.study.sm2 import INITIAL_EASE_FACTOR, sm2
 from app.modules.cards.schemas import CardRead
 from app.core.redis import get_redis
+from app.modules.ai.provider import LLMProvider
+from app.modules.decks.enums import Language
+from app.modules.study import schemas
+from app.modules.study.answers import (
+    AnswerDirection,
+    MatchKind,
+    match_answer,
+    normalize,
+)
 
 _DUE_CACHE_TTL = 300  # секунд
 
@@ -58,7 +67,7 @@ def submit_review(
 
     db.commit()
     db.refresh(progress)
-    
+
     try:
         get_redis().delete(_due_cache_key(user_id))
     except Exception:
@@ -112,3 +121,77 @@ def get_new_cards(db: Session, user_id: int) -> list[Card]:
             .where(Deck.user_id == user_id, Card.id.not_in(reviewed))
         )
     )
+
+_ANSWER_CACHE_TTL = 604800  # 7 дней
+
+_JUDGE_SYSTEM_PROMPT = (
+    "Ты проверяешь ответ студента в приложении для изучения языков. "
+    'Ответь РОВНО одним словом: "да" — если ответ студента приемлем, '
+    '"нет" — если нет. Приемлемыми считай синонимы и явные опечатки. '
+    "Не считай приемлемым другое по смыслу слово."
+)
+
+
+def _judge_with_llm(
+    provider: LLMProvider,
+    card_id: int,
+    direction: str,
+    answer: str,
+    expected: list[str],
+) -> bool:
+    key = f"answer:{card_id}:{direction}:{normalize(answer)}"
+    redis = get_redis()
+
+    try:
+        cached = redis.get(key)
+    except Exception:
+        cached = None
+    if cached is not None:
+        return cached == "1"
+
+    user_prompt = (
+        f"Правильные варианты: {', '.join(expected)}\n"
+        f"Ответ студента: {answer}\n"
+        "Приемлем ли ответ студента?"
+    )
+    try:
+        raw = provider.complete(_JUDGE_SYSTEM_PROMPT, user_prompt)
+    except Exception:
+        return False  # LLM недоступен — не засчитываем
+
+    correct = raw.strip().lower().startswith("да")
+
+    try:
+        redis.set(key, "1" if correct else "0", ex=_ANSWER_CACHE_TTL)
+    except Exception:
+        pass
+
+    return correct
+
+
+def check_answer(
+    db: Session,
+    provider: LLMProvider,
+    user_id: int,
+    card_id: int,
+    answer: str,
+    direction: AnswerDirection,
+) -> schemas.AnswerCheckResult:
+    card = _get_owned_card(db, user_id, card_id)
+
+    if direction == AnswerDirection.TO_RUSSIAN:
+        expected = [card.translation]
+        allow_fuzzy = True
+    else:
+        expected = [card.word, card.reference, *card.accepted_answers]
+        # для японского опечатка неотличима от другого слова — только точное
+        allow_fuzzy = card.deck.language != Language.JA
+
+    kind = match_answer(answer, expected, allow_fuzzy)
+    if kind in (MatchKind.EXACT, MatchKind.FUZZY):
+        return schemas.AnswerCheckResult(correct=True, kind=kind.value, expected=expected)
+
+    if _judge_with_llm(provider, card_id, direction.value, answer, expected):
+        return schemas.AnswerCheckResult(correct=True, kind="llm", expected=expected)
+
+    return schemas.AnswerCheckResult(correct=False, kind="incorrect", expected=expected)
