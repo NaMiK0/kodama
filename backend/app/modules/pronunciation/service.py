@@ -133,8 +133,13 @@ def process_attempt(db: Session, attempt_id: int) -> None:
         if not audio_path or not Path(audio_path).exists():
             raise ValueError("Аудиофайл недоступен")
 
+        # Первым — канонический reference, затем альтернативные записи
+        # (для японского Whisper часто выдаёт кандзи вместо хираганы).
+        expected = list(
+            dict.fromkeys([card.reference, card.word, *card.accepted_answers])
+        )
         checker = get_checker(card.deck.language)
-        result = checker.check(audio_path, card.reference)
+        result = checker.check(audio_path, expected)
 
         attempt.status = AttemptStatus.DONE
         attempt.score = result.score

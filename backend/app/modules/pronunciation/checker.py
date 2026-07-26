@@ -18,18 +18,22 @@ class PronunciationChecker(Protocol):
 
     Реализация выбирается по языку карточки:
     английский — фонемный анализ, японский — транскрибация Whisper.
+
+    expected: допустимые формы слова. Первый элемент — канонический reference
+    (эталон произношения); остальные — альтернативные записи (для японского
+    Whisper может выдать кандзи там, где reference хираганой).
     """
 
-    def check(self, audio_path: str, reference: str) -> PronunciationResult: ...
+    def check(self, audio_path: str, expected: list[str]) -> PronunciationResult: ...
 
 
 class StubChecker:
     """Заглушка: не трогает ML, нужна для отладки пайплайна целиком."""
 
-    def check(self, audio_path: str, reference: str) -> PronunciationResult:
+    def check(self, audio_path: str, expected: list[str]) -> PronunciationResult:
         return PronunciationResult(
             score=0.9,
-            transcript=reference,
+            transcript=expected[0] if expected else "",
             detail={"stub": True},
         )
 

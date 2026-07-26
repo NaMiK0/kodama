@@ -1,6 +1,7 @@
-import unicodedata
 from difflib import SequenceMatcher
 from enum import StrEnum
+
+from app.core.text import normalize
 
 FUZZY_THRESHOLD = 0.90
 FUZZY_MIN_LENGTH = 5  # на коротких словах опечатка неотличима от другого слова
@@ -15,16 +16,6 @@ class MatchKind(StrEnum):
     EXACT = "exact"        # точное совпадение
     FUZZY = "fuzzy"        # опечатка, но засчитываем
     UNKNOWN = "unknown"    # не совпало — дальше решает LLM
-
-
-def normalize(text: str) -> str:
-    """Приводит ответ к каноничному виду перед сравнением."""
-    text = unicodedata.normalize("NFKC", text)
-    text = text.strip().lower()
-    text = "".join(
-        ch for ch in text if not unicodedata.category(ch).startswith("P")
-    )
-    return " ".join(text.split())
 
 
 def match_answer(answer: str, expected: list[str], allow_fuzzy: bool) -> MatchKind:
