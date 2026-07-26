@@ -46,6 +46,64 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── Приложение ──────────────────────────────────────────
+  # Три процесса из ОДНОГО образа, отличаются только командой.
+
+  api:
+    build: ./backend
+    image: kodama-backend:dev
+    container_name: kodama-api
+    env_file: .env
+    environment: &app-env
+      # Внутри compose сервисы видят друг друга по ИМЕНИ, а не по localhost.
+      # Эти значения перекрывают .env, поэтому локальный запуск не ломается.
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "8001:8000"   # 8001 на хосте, чтобы не конфликтовать с booking_backend
+    volumes:
+      - kodama-uploads:/app/uploads
+    depends_on:
+      db: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  worker:
+    build: ./backend
+    image: kodama-backend:dev
+    container_name: kodama-worker
+    env_file: .env
+    environment: *app-env
+    depends_on:
+      db: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    command: python -m app.worker
+
+  pronunciation-worker:
+    build: ./backend
+    image: kodama-backend:dev
+    container_name: kodama-pronunciation-worker
+    env_file: .env
+    environment: *app-env
+    volumes:
+      - kodama-uploads:/app/uploads   # тот же том, что у api: он пишет, воркер читает
+      - kodama-models:/cache          # кеш ML-моделей переживает пересборку образа
+    depends_on:
+      db: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    command: python -m app.pronunciation_worker
+
 volumes:
   kodama-pgdata:
   kodama-rabbitmq-data:
+  kodama-uploads:
+  kodama-models:
