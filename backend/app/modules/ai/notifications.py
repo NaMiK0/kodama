@@ -4,7 +4,7 @@ import aio_pika
 
 from app.core.config import settings
 from app.core.websocket import manager
-from app.modules.ai.queue import NOTIFICATIONS_EXCHANGE
+from app.core.notifications import NOTIFICATIONS_EXCHANGE
 
 async def consume_notifications() -> None:
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)

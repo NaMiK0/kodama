@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 6379
 
+    # ── Проверка произношения ──
+    # stub — заглушка без ML (отладка пайплайна), real — настоящие модели
+    pronunciation_backend: str = "stub"
+    whisper_model: str = "small"
+    upload_dir: str = "uploads"
+
     @property
     def rabbitmq_url(self) -> str:
         return (

@@ -2,6 +2,7 @@ import json
 import pika
 
 from app.core.config import settings
+from app.core.notifications import publish_notification as core_publish_notification
 
 GENERATION_QUEUE = "deck_generation"
 
@@ -20,28 +21,17 @@ def publish_generation_job(job_id: int) -> None:
         connection.close()
 
 
-NOTIFICATIONS_EXCHANGE = "notifications"
-
 def publish_notification(
     user_id: int, job_id: int, status: str, deck_id: int | None
 ) -> None:
-    connection = pika.BlockingConnection(pika.URLParameters(settings.rabbitmq_url))
-    try:
-        channel = connection.channel()
-        channel.exchange_declare(
-            exchange=NOTIFICATIONS_EXCHANGE, exchange_type="fanout", durable=True
-        )
-        channel.basic_publish(
-            exchange=NOTIFICATIONS_EXCHANGE,
-            routing_key="",  # fanout игнорирует routing_key
-            body=json.dumps(
-                {
-                    "user_id": user_id,
-                    "job_id": job_id,
-                    "status": status,
-                    "deck_id": deck_id,
-                }
-            ),
-        )
-    finally:
-        connection.close()
+    """Уведомление о готовности сгенерированной колоды.
+    Транспорт общий (app/core/notifications.py) — им же пользуется произношение."""
+    core_publish_notification(
+        {
+            "type": "generation",
+            "user_id": user_id,
+            "job_id": job_id,
+            "status": status,
+            "deck_id": deck_id,
+        }
+    )

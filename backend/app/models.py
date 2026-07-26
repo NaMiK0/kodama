@@ -5,5 +5,13 @@ from app.modules.cards.models import Card
 from app.modules.decks.models import Deck
 from app.modules.study.models import UserCardProgress
 from app.modules.ai.models import GenerationJob
+from app.modules.pronunciation.models import PronunciationAttempt
 
-__all__ = ["User", "Deck", "Card", "UserCardProgress", "GenerationJob"]
+__all__ = [
+    "User",
+    "Deck",
+    "Card",
+    "UserCardProgress",
+    "GenerationJob",
+    "PronunciationAttempt",
+]
