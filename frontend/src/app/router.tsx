@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router'
 import { AuthCard } from '@/features/auth/ui/AuthCard'
 import { AuthLayout } from '@/features/auth/ui/AuthLayout'
 import { GoogleCallback } from '@/features/auth/ui/GoogleCallback'
+import { Home } from '@/features/auth/ui/Home'
 import { RequireAuth } from '@/features/auth/ui/RequireAuth'
 import { RequireGuest } from '@/features/auth/ui/RequireGuest'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
@@ -35,7 +36,7 @@ export function AppRouter() {
 
       {/* Приватные: без сессии уводим на /login */}
       <Route element={<RequireAuth />}>
-        <Route path="/" element={<Placeholder title="Kodama — здесь будет главная" />} />
+        <Route path="/" element={<Home />} />
       </Route>
 
       {/* Служебная страница проверки токенов — вне auth-контура */}
