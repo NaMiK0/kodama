@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 
-import { useTheme } from '@/shared/lib/useTheme'
+import { useTheme } from '@/shared/lib/ThemeProvider'
 import type { Theme } from '@/shared/lib/theme'
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
@@ -44,7 +44,7 @@ export function TokensPreview() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="rounded-xl border border-line bg-surface p-5"
+            className="rounded-xl border border-line bg-surface p-5 shadow-card"
           >
             <p className="text-xs tracking-wide text-accent-strong">N5 · животные</p>
             <p className="mt-2 font-jp text-4xl leading-tight">ねこ</p>
@@ -58,7 +58,7 @@ export function TokensPreview() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.05, ease: 'easeOut' }}
-            className="rounded-xl border border-line bg-surface p-5"
+            className="rounded-xl border border-line bg-surface p-5 shadow-card"
           >
             <p className="text-xs tracking-wide text-accent-strong">B1 · IT-лексика</p>
             <p className="mt-2 text-4xl leading-tight">deploy</p>
@@ -86,7 +86,7 @@ export function TokensPreview() {
 
         <section className="flex flex-col gap-2">
           <p className="text-sm text-ink-subtle">Размер японского текста</p>
-          <div className="rounded-xl border border-line bg-surface p-5">
+          <div className="rounded-xl border border-line bg-surface p-5 shadow-card">
             <p className="text-base">
               Одинаковый кегль: <span className="font-jp">ねこ／犬／コーヒー</span> vs deploy
             </p>
