@@ -1,1 +1,95 @@
+@import '@fontsource-variable/inter';
 @import 'tailwindcss';
+
+/* Тёмная тема переключается классом на <html>, а не только системной
+   настройкой — чтобы пользователь мог выбрать вручную. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-line: var(--line);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  /* Японские глифы берём из системных шрифтов: веб-шрифт для японского
+     весит мегабайты, а системные (Hiragino, Yu Gothic, Noto) отличные. */
+  --font-jp: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic',
+    'Noto Sans JP', 'Inter Variable', sans-serif;
+}
+
+:root {
+  --canvas: #f7f6f2;
+  --surface: #ffffff;
+  --surface-soft: #f1efe8;
+  --line: #e3e1d9;
+
+  --ink: #2c2c2a;
+  --ink-muted: #5f5e5a;
+  --ink-subtle: #8b8a82;
+
+  --accent: #639922;
+  --accent-strong: #3b6d11;
+  --accent-soft: #eaf3de;
+  --accent-ink: #ffffff;
+
+  --danger: #a32d2d;
+  --danger-soft: #fcebeb;
+}
+
+.dark {
+  --canvas: #191a17;
+  --surface: #22241f;
+  --surface-soft: #2b2e27;
+  --line: #383b33;
+
+  --ink: #edede7;
+  --ink-muted: #a8a9a1;
+  --ink-subtle: #7c7e75;
+
+  /* На тёмном фоне зелёный берём светлее — иначе не хватает контраста */
+  --accent: #97c459;
+  --accent-strong: #c0dd97;
+  --accent-soft: #27500a;
+  --accent-ink: #17190f;
+
+  --danger: #f09595;
+  --danger-soft: #501313;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Кому анимации мешают физически — тем их не показываем */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
