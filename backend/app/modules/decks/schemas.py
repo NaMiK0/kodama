@@ -28,4 +28,7 @@ class DeckRead(BaseModel):
     level: Level
     source: DeckSource
     created_at: datetime
+    # Не колонка в БД — служба вычисляет одним запросом и прикрепляет
+    # к ORM-объекту (deck.card_count = ...) перед возвратом.
+    card_count: int
 
