@@ -1,7 +1,10 @@
 import { motion } from 'motion/react'
+import { useState } from 'react'
 
 import { useTheme } from '@/shared/lib/ThemeProvider'
 import type { Theme } from '@/shared/lib/theme'
+import { Button } from '@/shared/ui/Button'
+import { TextField } from '@/shared/ui/TextField'
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 const THEME_LABELS: Record<Theme, string> = {
@@ -12,6 +15,13 @@ const THEME_LABELS: Record<Theme, string> = {
 
 export function TokensPreview() {
   const { theme, setTheme } = useTheme()
+  const [showError, setShowError] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  function runFakeRequest() {
+    setLoading(true)
+    setTimeout(() => setLoading(false), 2000)
+  }
 
   return (
     <div className="min-h-dvh px-6 py-10">
@@ -69,18 +79,38 @@ export function TokensPreview() {
           </motion.article>
         </section>
 
-        <section className="flex flex-col gap-3">
-          <p className="text-sm text-ink-subtle">Кнопки</p>
-          <div className="flex flex-wrap gap-3">
-            <button className="rounded-lg bg-accent px-4 py-2 text-sm text-accent-ink transition-colors hover:bg-accent-strong">
-              Начать повторение
-            </button>
-            <button className="rounded-lg border border-line bg-surface px-4 py-2 text-sm transition-colors hover:bg-surface-soft">
-              Пропустить произношение
-            </button>
-            <button className="rounded-lg bg-danger-soft px-4 py-2 text-sm text-danger">
-              Не помню
-            </button>
+        <section className="flex flex-col gap-4">
+          <p className="text-sm text-ink-subtle">Поля и кнопки</p>
+
+          <div className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5 shadow-card">
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="name@example.com"
+              autoComplete="email"
+            />
+            <TextField
+              label="Пароль"
+              type="password"
+              autoComplete="current-password"
+              hint="Не короче 8 символов"
+            />
+            <TextField
+              label="Поле с ошибкой"
+              defaultValue="не-почта"
+              error={showError ? 'Проверьте адрес: похоже, в нём опечатка' : undefined}
+            />
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={() => setShowError((v) => !v)} variant="secondary">
+                {showError ? 'Убрать ошибку' : 'Показать ошибку'}
+              </Button>
+              <Button loading={loading} onClick={runFakeRequest}>
+                Начать повторение
+              </Button>
+              <Button variant="ghost">Пропустить</Button>
+              <Button disabled>Недоступно</Button>
+            </div>
           </div>
         </section>
 
