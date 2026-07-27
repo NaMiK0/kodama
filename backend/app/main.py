@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import asyncio
 from contextlib import asynccontextmanager
+
+from app.core.config import settings
 
 from app.modules.ai.notifications import consume_notifications
 
@@ -28,6 +31,16 @@ async def lifespan(app: FastAPI):
             pass
 
 app = FastAPI(title="Kodama API", lifespan=lifespan)
+
+# Origin'ы перечисляем ЯВНО: со звёздочкой браузер не пропустит запросы
+# с credentials, а куки — это как раз credentials.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,   # без этого браузер не отправит и не примет куку
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 app.include_router(router=auth_router)

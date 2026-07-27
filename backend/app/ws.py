@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import decode_access_token
 from app.core.websocket import manager
@@ -22,7 +23,10 @@ def _authenticate(token: str | None) -> User | None:
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str | None = None) -> None:
-    user = _authenticate(token)
+    # Браузер сам приложит куку к WS-рукопожатию — токен в URL больше не нужен.
+    # Query-параметр оставлен как запасной путь для скриптов и отладки.
+    cookie_token = websocket.cookies.get(settings.auth_cookie_name)
+    user = _authenticate(cookie_token or token)
     if user is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return

@@ -27,6 +27,20 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    # ── Cookie-авторизация ──
+    auth_cookie_name: str = "kodama_access_token"
+    # На localhost по http кука с флагом secure не поставится — включаем на проде
+    auth_cookie_secure: bool = False
+
+    # ── CORS ──
+    # Через запятую. Список задаём строкой, а не list[str]: так значение
+    # читается из .env как есть, без обязательного JSON-синтаксиса.
+    cors_origins: str = "http://localhost:5173"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
     # ── LLM / OpenRouter ──
     openrouter_api_key: str
     openrouter_base_url: str = "https://openrouter.ai/api/v1"

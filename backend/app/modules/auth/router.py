@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.modules.auth import oauth
+from app.modules.auth.cookies import clear_auth_cookie, set_auth_cookie
 from app.core.email import EmailSender, get_email_sender
 from app.modules.auth import schemas, service
 from app.modules.auth.models import User
@@ -35,6 +36,7 @@ def register(data: schemas.UserRegister, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=schemas.Token)
 def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ) -> schemas.Token:
@@ -46,7 +48,15 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(subject=str(user.id))
+    # Браузеру — кука; в теле токен остаётся для Swagger, curl и API-клиентов.
+    set_auth_cookie(response, access_token)
     return schemas.Token(access_token=access_token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> None:
+    # Намеренно без авторизации: выйти можно и с протухшим токеном.
+    clear_auth_cookie(response)
 
 
 @router.get("/me", response_model=schemas.UserRead)
@@ -106,6 +116,9 @@ def google_callback(
 
     user = service.authenticate_google_user(db, email, google_id)
     access_token = create_access_token(subject=str(user.id))
-    return RedirectResponse(
-        f"{settings.frontend_base_url}/auth/callback?token={access_token}"
-    )
+
+    # Токен уходит в куку, а НЕ в адресную строку: URL попадает в историю
+    # браузера, логи прокси и заголовок Referer.
+    redirect = RedirectResponse(f"{settings.frontend_base_url}/auth/callback")
+    set_auth_cookie(redirect, access_token)
+    return redirect
