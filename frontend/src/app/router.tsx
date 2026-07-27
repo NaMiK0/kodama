@@ -2,6 +2,9 @@ import { Route, Routes } from 'react-router'
 
 import { AuthCard } from '@/features/auth/ui/AuthCard'
 import { AuthLayout } from '@/features/auth/ui/AuthLayout'
+import { GoogleCallback } from '@/features/auth/ui/GoogleCallback'
+import { RequireAuth } from '@/features/auth/ui/RequireAuth'
+import { RequireGuest } from '@/features/auth/ui/RequireGuest'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
 
 function Placeholder({ title }: { title: string }) {
@@ -15,18 +18,29 @@ function Placeholder({ title }: { title: string }) {
 export function AppRouter() {
   return (
     <Routes>
-      {/* Временная страница: проверка палитры и типографики.
-          Уберём, когда появятся настоящие экраны. */}
-      <Route path="/" element={<TokensPreview />} />
-      <Route
-        path="/login"
-        element={
-          <AuthLayout>
-            <AuthCard />
-          </AuthLayout>
-        }
-      />
-      <Route path="/auth/callback" element={<Placeholder title="Возврат из Google" />} />
+      {/* Публичные: уже вошедшего уводим на приватную часть */}
+      <Route element={<RequireGuest />}>
+        <Route
+          path="/login"
+          element={
+            <AuthLayout>
+              <AuthCard />
+            </AuthLayout>
+          }
+        />
+      </Route>
+
+      {/* Сюда редиректит бэкенд после успешного входа через Google */}
+      <Route path="/auth/callback" element={<GoogleCallback />} />
+
+      {/* Приватные: без сессии уводим на /login */}
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<Placeholder title="Kodama — здесь будет главная" />} />
+      </Route>
+
+      {/* Служебная страница проверки токенов — вне auth-контура */}
+      <Route path="/tokens" element={<TokensPreview />} />
+
       <Route path="*" element={<Placeholder title="Страница не найдена" />} />
     </Routes>
   )

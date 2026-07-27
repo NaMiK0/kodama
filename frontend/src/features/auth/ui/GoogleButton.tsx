@@ -1,3 +1,5 @@
+import { googleLoginUrl } from '../api'
+
 function GoogleG() {
   return (
     <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
@@ -25,6 +27,11 @@ export function GoogleButton() {
   return (
     <button
       type="button"
+      // Полный переход, не fetch: OAuth-флоу требует настоящей навигации —
+      // бэкенд сам отправит браузер на Google и обратно.
+      onClick={() => {
+        window.location.href = googleLoginUrl()
+      }}
       className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-line bg-surface text-sm text-ink outline-none transition-colors duration-150 hover:bg-surface-soft focus-visible:ring-4 focus-visible:ring-accent/25"
     >
       <GoogleG />

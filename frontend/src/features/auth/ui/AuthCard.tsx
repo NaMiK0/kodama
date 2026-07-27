@@ -1,7 +1,8 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 
-import { AuthForm } from './AuthForm'
+import { LoginForm } from './LoginForm'
+import { RegisterForm } from './RegisterForm'
 
 // Переключение вход <-> регистрация как переворот флеш-карты — приём выведен
 // из самого продукта (учебная карточка), а не взят из шаблона.
@@ -10,27 +11,8 @@ export function AuthCard() {
   const reduceMotion = useReducedMotion()
   const flipped = mode === 'register'
 
-  const login = (
-    <AuthForm
-      title="Вход"
-      submitLabel="Войти"
-      footerPrompt="Нет аккаунта?"
-      footerLink="Создать"
-      passwordAutoComplete="current-password"
-      onFlip={() => setMode('register')}
-    />
-  )
-
-  const register = (
-    <AuthForm
-      title="Регистрация"
-      submitLabel="Создать аккаунт"
-      footerPrompt="Уже есть аккаунт?"
-      footerLink="Войти"
-      passwordAutoComplete="new-password"
-      onFlip={() => setMode('login')}
-    />
-  )
+  const login = <LoginForm onFlip={() => setMode('register')} />
+  const register = <RegisterForm onFlip={() => setMode('login')} />
 
   // Кому анимации мешают — просто показываем нужную сторону без переворота
   if (reduceMotion) return flipped ? register : login

@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 
 import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
@@ -10,29 +10,54 @@ type AuthFormProps = {
   submitLabel: string
   footerPrompt: string
   footerLink: string
-  // Подсказка автозаполнению: пароль вводят или существующий, или новый
-  passwordAutoComplete: 'current-password' | 'new-password'
   onFlip: () => void
+
+  email: string
+  onEmailChange: (value: string) => void
+  emailError?: string
+
+  password: string
+  onPasswordChange: (value: string) => void
+  passwordError?: string
+  passwordAutoComplete: 'current-password' | 'new-password'
+
+  /** Ошибка, которая не привязана к одному полю (например, «неверный пароль») */
+  formError?: string
+
+  loading: boolean
+  onSubmit: () => void
 }
 
-// Одна форма на вход И регистрацию: структура идентична, различаются подписи.
-// Это заодно гарантирует одинаковую высоту сторон — важно для переворота.
+// Presentational-часть: вся логика (валидация, мутации, редирект) живёт
+// в LoginForm/RegisterForm. Здесь — только вёрстка и контролируемые поля.
 export function AuthForm({
   title,
   submitLabel,
   footerPrompt,
   footerLink,
-  passwordAutoComplete,
   onFlip,
+  email,
+  onEmailChange,
+  emailError,
+  password,
+  onPasswordChange,
+  passwordError,
+  passwordAutoComplete,
+  formError,
+  loading,
+  onSubmit,
 }: AuthFormProps) {
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    // Отправку подключим на следующей стадии — сейчас только оболочка
+    onSubmit()
   }
 
   return (
     <form
       onSubmit={handleSubmit}
+      // noValidate отключает браузерные пузыри-подсказки. Проверяем сами
+      // и показываем через наш TextField error — единый вид во всех браузерах.
+      noValidate
       className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-8 shadow-card"
     >
       <h1 className="text-xl font-medium">{title}</h1>
@@ -43,17 +68,29 @@ export function AuthForm({
           type="email"
           autoComplete="email"
           placeholder="name@example.com"
-          required
+          value={email}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onEmailChange(e.target.value)}
+          error={emailError}
         />
         <TextField
           label="Пароль"
           type="password"
           autoComplete={passwordAutoComplete}
-          required
+          value={password}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onPasswordChange(e.target.value)}
+          error={passwordError}
         />
       </div>
 
-      <Button type="submit" className="w-full">
+      {/* Ошибка формы целиком (не привязана к полю) — например, неверная пара
+          email/пароль: непонятно, какое из полей винить, поэтому баннер. */}
+      {formError && (
+        <p role="alert" className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm text-danger">
+          {formError}
+        </p>
+      )}
+
+      <Button type="submit" className="w-full" loading={loading}>
         {submitLabel}
       </Button>
 
