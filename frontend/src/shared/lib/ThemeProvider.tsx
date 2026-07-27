@@ -3,13 +3,17 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import {
   applyTheme,
   getStoredTheme,
+  resolveIsDark,
   setTheme as persistTheme,
   watchSystemTheme,
   type Theme,
 } from './theme'
 
 type ThemeContextValue = {
+  /** Что выбрал пользователь: 'light' | 'dark' | 'system' */
   theme: Theme
+  /** Что получилось фактически — 'system' сам по себе ни о чём не говорит */
+  isDark: boolean
   setTheme: (theme: Theme) => void
 }
 
@@ -22,24 +26,28 @@ const ThemeContext = createContext<ThemeContextValue | null>(null)
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(getStoredTheme)
+  const [isDark, setIsDark] = useState(() => resolveIsDark(getStoredTheme()))
 
   useEffect(() => {
-    applyTheme(theme)
+    const sync = () => {
+      applyTheme(theme)
+      setIsDark(resolveIsDark(theme))
+    }
+    sync()
     if (theme !== 'system') return
 
     // В режиме «как в системе» следим за её переключением на лету
-    const reapply = () => applyTheme('system')
-    const unwatch = watchSystemTheme(reapply)
+    const unwatch = watchSystemTheme(sync)
 
     // Страховка: если системную тему сменили, пока вкладка была неактивна,
     // событие может не дойти — досогласуем состояние при возвращении.
-    document.addEventListener('visibilitychange', reapply)
-    window.addEventListener('focus', reapply)
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('focus', sync)
 
     return () => {
       unwatch()
-      document.removeEventListener('visibilitychange', reapply)
-      window.removeEventListener('focus', reapply)
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('focus', sync)
     }
   }, [theme])
 
@@ -48,7 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(next)
   }
 
-  return <ThemeContext value={{ theme, setTheme }}>{children}</ThemeContext>
+  return <ThemeContext value={{ theme, isDark, setTheme }}>{children}</ThemeContext>
 }
 
 export function useTheme(): ThemeContextValue {

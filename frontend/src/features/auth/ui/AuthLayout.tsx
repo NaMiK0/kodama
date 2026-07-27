@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { ThemeToggle } from '@/shared/ui/ThemeToggle'
+
 import { EchoRipples } from './EchoRipples'
 import { ForestPanel } from './ForestPanel'
 
@@ -19,6 +21,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       </div>
 
       <ForestPanel />
+
+      {/* Служебная зона в углу: карточка остаётся чистой.
+          На мобильном кнопка лежит на лесу, на десктопе — на светлом фоне,
+          поэтому цвет разный. */}
+      <ThemeToggle className="absolute top-4 right-4 z-10 text-forest-ink/60 hover:text-forest-ink lg:text-ink-subtle lg:hover:text-ink" />
 
       <main className="relative flex min-h-dvh flex-col items-center justify-center gap-10 px-6 py-12 lg:min-h-0 lg:gap-0">
         <header className="text-center lg:hidden">
