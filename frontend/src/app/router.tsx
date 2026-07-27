@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 
+import { AuthCard } from '@/features/auth/ui/AuthCard'
 import { AuthLayout } from '@/features/auth/ui/AuthLayout'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
 
@@ -21,10 +22,7 @@ export function AppRouter() {
         path="/login"
         element={
           <AuthLayout>
-            {/* Сюда встанет переворачивающаяся карточка со следующим куском */}
-            <div className="rounded-2xl border border-line bg-surface p-8 shadow-card">
-              <p className="text-ink-muted">Место для карточки входа</p>
-            </div>
+            <AuthCard />
           </AuthLayout>
         }
       />
