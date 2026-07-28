@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.models import User
 from app.modules.decks import schemas, service
+from app.modules.decks.enums import Language
 from app.modules.decks.models import Deck
 
 router = APIRouter(prefix="/decks", tags=["decks"])
@@ -19,10 +20,13 @@ def create_deck(
 
 @router.get("", response_model=list[schemas.DeckRead])
 def list_decks(
+    language: Language | None = None,
+    limit: int | None = Query(default=None, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[Deck]:
-    return service.list_decks(db, current_user.id)
+    return service.list_decks(db, current_user.id, language, limit, offset)
 
 @router.get("/{deck_id}", response_model=schemas.DeckRead)
 def get_deck(

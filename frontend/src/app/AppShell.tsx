@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 
 import { useLogout, useMe } from '@/features/auth/hooks'
 import { useLanguage, type StudyLanguage } from '@/shared/lib/LanguageProvider'
+import { ServerEventsProvider } from '@/shared/lib/ServerEventsProvider'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 
@@ -45,29 +46,33 @@ export function AppShell({ children }: { children: ReactNode }) {
   const logout = useLogout()
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <header className="flex items-center justify-between border-b border-line px-6 py-3">
-        <Link to="/" className="font-jp text-xl text-ink select-none">
-          木霊
-        </Link>
+    // WS нужен только авторизованному контуру — соединение живёт здесь,
+    // а не в App.tsx, где ещё нет сессии.
+    <ServerEventsProvider>
+      <div className="min-h-dvh bg-canvas">
+        <header className="flex items-center justify-between border-b border-line px-6 py-3">
+          <Link to="/" className="font-jp text-xl text-ink select-none">
+            木霊
+          </Link>
 
-        <LanguageSwitcher />
+          <LanguageSwitcher />
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle className="text-ink-subtle hover:text-ink" />
-          {user && (
-            <Button
-              variant="ghost"
-              loading={logout.isPending}
-              onClick={() => logout.mutate()}
-            >
-              Выйти
-            </Button>
-          )}
-        </div>
-      </header>
+          <div className="flex items-center gap-3">
+            <ThemeToggle className="text-ink-subtle hover:text-ink" />
+            {user && (
+              <Button
+                variant="ghost"
+                loading={logout.isPending}
+                onClick={() => logout.mutate()}
+              >
+                Выйти
+              </Button>
+            )}
+          </div>
+        </header>
 
-      <main>{children}</main>
-    </div>
+        <main>{children}</main>
+      </div>
+    </ServerEventsProvider>
   )
 }

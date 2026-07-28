@@ -1,8 +1,21 @@
 from datetime import date
 
-from app.modules.study.answers import AnswerDirection
+from app.modules.cards.schemas import CardRead
+from app.modules.study.enums import AnswerDirection
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class StudyItem(BaseModel):
+    """Единица сессии: что спросить и в какую сторону.
+
+    Направление приходит с сервера вместе с карточкой, а не выбирается
+    пользователем на входе: у каждой стороны своё расписание, и очередь
+    на сегодня складывается из того, что реально подошло по срокам.
+    """
+
+    card: CardRead
+    direction: AnswerDirection
 
 class ReviewRequest(BaseModel):
     card_id: int

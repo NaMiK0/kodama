@@ -1,11 +1,16 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'ghost'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ai'
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-accent text-accent-ink hover:bg-accent-strong',
   secondary: 'border border-line bg-surface text-ink hover:bg-surface-soft',
   ghost: 'text-ink-muted hover:bg-surface-soft hover:text-ink',
+  danger: 'bg-danger text-accent-ink hover:opacity-90',
+  // Мягкая подложка, а не сплошная заливка: действие заметное, но вторичное —
+  // главным на экране остаётся зелёное «Создать колоду».
+  // overflow-hidden держит блик (.ai-shimmer::after) внутри кнопки.
+  ai: 'ai-shimmer overflow-hidden border border-ai/25 bg-ai-soft text-ai hover:border-ai/40',
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

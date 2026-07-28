@@ -3,9 +3,11 @@ import { Outlet, Route, Routes } from 'react-router'
 import { AuthCard } from '@/features/auth/ui/AuthCard'
 import { AuthLayout } from '@/features/auth/ui/AuthLayout'
 import { GoogleCallback } from '@/features/auth/ui/GoogleCallback'
-import { Home } from '@/features/auth/ui/Home'
 import { RequireAuth } from '@/features/auth/ui/RequireAuth'
 import { RequireGuest } from '@/features/auth/ui/RequireGuest'
+import { DeckDetailPage } from '@/features/decks/ui/DeckDetailPage'
+import { DecksPage } from '@/features/decks/ui/DecksPage'
+import { StudySessionPage } from '@/features/study/ui/StudySessionPage'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
 
 import { AppShell } from './AppShell'
@@ -37,8 +39,7 @@ export function AppRouter() {
       <Route path="/auth/callback" element={<GoogleCallback />} />
 
       {/* Приватные: без сессии уводим на /login. AppShell — общий каркас
-          (шапка, язык, тема, выход) для ВСЕХ вложенных приватных маршрутов —
-          сюда же позже встанут /decks и остальные разделы. */}
+          (шапка, язык, тема, выход) для ВСЕХ вложенных приватных маршрутов. */}
       <Route element={<RequireAuth />}>
         <Route
           element={
@@ -47,7 +48,9 @@ export function AppRouter() {
             </AppShell>
           }
         >
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<DecksPage />} />
+          <Route path="/decks/:deckId" element={<DeckDetailPage />} />
+          <Route path="/study" element={<StudySessionPage />} />
         </Route>
       </Route>
 

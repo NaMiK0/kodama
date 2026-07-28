@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.modules.ai.provider import LLMProvider, get_llm_provider
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.models import User
-from app.modules.cards import schemas as card_schemas
-from app.modules.cards.models import Card
+from app.modules.decks.enums import Language
 from app.modules.study import schemas, service
-from app.modules.study.models import UserCardProgress
 
 router = APIRouter(prefix="/study", tags=["study"])
 
@@ -33,20 +31,23 @@ def submit_review(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Карточка не найдена")
 
 
-@router.get("/due", response_model=list[card_schemas.CardRead])
+@router.get("/due", response_model=list[schemas.StudyItem])
 def due_cards(
+    language: Language,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[card_schemas.CardRead]:
-    return service.get_due_cards(db, current_user.id)
+) -> list[schemas.StudyItem]:
+    return service.get_due_cards(db, current_user.id, language)
 
 
-@router.get("/new", response_model=list[card_schemas.CardRead])
+@router.get("/new", response_model=list[schemas.StudyItem])
 def new_cards(
+    language: Language,
+    limit: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[Card]:
-    return service.get_new_cards(db, current_user.id)
+) -> list[schemas.StudyItem]:
+    return service.get_new_cards(db, current_user.id, language, limit)
 
 @router.post("/check-answer", response_model=schemas.AnswerCheckResult)
 def check_answer(

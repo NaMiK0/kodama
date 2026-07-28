@@ -4,7 +4,7 @@ from enum import StrEnum
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -49,6 +49,10 @@ class Deck(Base):
     )
 
     __table_args__ = (
+        # Список колод всегда запрашивается в разрезе «мои колоды на этом
+        # языке» — составной индекс покрывает такой запрос целиком, тогда как
+        # одиночный ix_decks_user_id заставил бы отфильтровывать язык поверх.
+        Index("ix_decks_user_id_language", "user_id", "language"),
         CheckConstraint(
             "(language = 'en' AND level IN ('A1','A2','B1','B2','C1','C2')) "
             "OR (language = 'ja' AND level IN ('N5','N4','N3','N2','N1'))",

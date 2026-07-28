@@ -2,14 +2,12 @@ from difflib import SequenceMatcher
 from enum import StrEnum
 
 from app.core.text import normalize
+from app.modules.study.enums import AnswerDirection
+
+__all__ = ["AnswerDirection", "MatchKind", "match_answer", "FUZZY_THRESHOLD", "FUZZY_MIN_LENGTH"]
 
 FUZZY_THRESHOLD = 0.90
 FUZZY_MIN_LENGTH = 5  # на коротких словах опечатка неотличима от другого слова
-
-
-class AnswerDirection(StrEnum):
-    TO_TARGET = "to_target"      # RU -> изучаемый язык
-    TO_RUSSIAN = "to_russian"    # изучаемый язык -> RU
 
 
 class MatchKind(StrEnum):

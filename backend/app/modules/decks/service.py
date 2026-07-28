@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.cards.models import Card
 from app.modules.decks import schemas
-from app.modules.decks.enums import LANGUAGE_LEVELS
+from app.modules.decks.enums import LANGUAGE_LEVELS, Language
 from app.modules.decks.models import Deck
 
 class DeckNotFoundError(Exception):
@@ -25,7 +25,13 @@ def create_deck(db: Session, user_id: int, data: schemas.DeckCreate) -> Deck:
     deck.card_count = 0  # только что созданная колода — карточек ещё нет
     return deck
 
-def list_decks(db: Session, user_id: int) -> list[Deck]:
+def list_decks(
+    db: Session,
+    user_id: int,
+    language: Language | None = None,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[Deck]:
     # Считаем карточки одним запросом (коррелированный подзапрос), а не
     # обращением к deck.cards в цикле — иначе на N колод вышло бы N+1 запрос.
     card_count_subq = (
@@ -34,11 +40,24 @@ def list_decks(db: Session, user_id: int) -> list[Deck]:
         .correlate(Deck)
         .scalar_subquery()
     )
-    rows = db.execute(
-        select(Deck, card_count_subq.label("card_count"))
-        .where(Deck.user_id == user_id)
-        .order_by(Deck.created_at.desc())
-    ).all()
+    stmt = select(Deck, card_count_subq.label("card_count")).where(Deck.user_id == user_id)
+
+    # Язык — не косметический фильтр: у каждого языка свой прогресс, поэтому
+    # экраны всегда работают в разрезе одного языка. None оставлен для срезов
+    # по обоим языкам сразу (например, будущая коллекция пройденных колод).
+    if language is not None:
+        stmt = stmt.where(Deck.language == language)
+
+    # Сортировка до limit/offset — иначе страницы поехали бы: без ORDER BY
+    # порядок строк в Postgres не гарантирован между запросами.
+    stmt = stmt.order_by(Deck.created_at.desc())
+
+    if offset:
+        stmt = stmt.offset(offset)
+    if limit is not None:
+        stmt = stmt.limit(limit)
+
+    rows = db.execute(stmt).all()
 
     decks = []
     for deck, card_count in rows:

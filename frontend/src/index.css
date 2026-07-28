@@ -23,6 +23,13 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
+  /* Отдельная роль для ИИ-действий. Сиреневый — сложившаяся в индустрии
+     метка «это сделала модель»; берём его собственной ролью, а не хардкодом,
+     чтобы он жил по правилам системы и работал в обеих темах. */
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-ink: var(--ai-ink);
+
   /* Фирменная тёмная панель — атмосфера, а не поверхность интерфейса.
      Между темами меняется не цвет, а «время суток»: в тёмной глубже. */
   --color-forest: var(--forest);
@@ -57,6 +64,10 @@
   --danger: #a32d2d;
   --danger-soft: #fcebeb;
 
+  --ai: #6d4aca;
+  --ai-soft: #f0ebfd;
+  --ai-ink: #ffffff;
+
   --forest: #1b2614;
   --forest-ink: #d8e6c4;
 
@@ -87,6 +98,11 @@
 
   --danger: #f09595;
   --danger-soft: #501313;
+
+  /* Сиреневый, как и зелёный, на тёмном фоне берём светлее */
+  --ai: #b79cf5;
+  --ai-soft: #2e2350;
+  --ai-ink: #17131f;
 
   /* Ночной лес: глубже светлого, чтобы панель тоже «меняла время суток» */
   --forest: #131c0e;
@@ -127,6 +143,34 @@
 
   .spinner {
     animation: kodama-spin 0.8s linear infinite;
+  }
+
+  @keyframes kodama-shimmer {
+    to {
+      transform: translateX(200%);
+    }
+  }
+
+  /* Блик пробегает по кнопке только при наведении, а не по кругу: постоянно
+     движущийся элемент на экране, который видишь каждый день, утомляет.
+     Анимируется только transform, подложка — прозрачный градиент. */
+  .ai-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 50%;
+    transform: translateX(-200%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--ai) 22%, transparent),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .ai-shimmer:hover::after {
+    animation: kodama-shimmer 0.9s ease-out;
   }
 
   /* Кому анимации мешают физически — тем их не показываем */
