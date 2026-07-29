@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { DECKS_QUERY_KEY, deckDetailKey } from '@/features/decks/hooks'
 
-import { createCard, deleteCard, fetchCards, type Card, type CardCreatePayload } from './api'
+import {
+  createCard,
+  deleteCard,
+  fetchCards,
+  updateCard,
+  type Card,
+  type CardCreatePayload,
+} from './api'
 
 // Карточки — подресурс колоды, поэтому ключ продолжает ключ самой колоды:
 // инвалидация по префиксу ['decks'] накрывает и их тоже.
@@ -49,6 +56,19 @@ export function useAddCards(deckId: number) {
         queryClient.invalidateQueries({ queryKey: cardsQueryKey(deckId) })
         queryClient.invalidateQueries({ queryKey: DECKS_QUERY_KEY })
       }
+    },
+  })
+}
+
+// card_count колоды не меняется при редактировании — DECKS_QUERY_KEY трогать не нужно,
+// в отличие от useAddCards/useDeleteCard.
+export function useUpdateCard(deckId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ cardId, payload }: { cardId: number; payload: CardCreatePayload }) =>
+      updateCard(deckId, cardId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: cardsQueryKey(deckId) })
     },
   })
 }

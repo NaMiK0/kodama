@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
+import type { Card } from '@/features/cards/api'
 import { AddCardsModal } from '@/features/cards/ui/AddCardsModal'
 import { CardRow } from '@/features/cards/ui/CardRow'
+import { EditCardModal } from '@/features/cards/ui/EditCardModal'
 import { useCards, useDeleteCard } from '@/features/cards/hooks'
 import { Button } from '@/shared/ui/Button'
 import { ConfirmModal } from '@/shared/ui/ConfirmModal'
@@ -20,6 +22,7 @@ export function DeckDetailPage() {
 
   const deleteCard = useDeleteCard(id)
   const [cardToDelete, setCardToDelete] = useState<{ id: number; word: string }>()
+  const [cardToEdit, setCardToEdit] = useState<Card>()
 
   const deleteDeck = useDeleteDeck()
   const [deckDeleteOpen, setDeckDeleteOpen] = useState(false)
@@ -72,6 +75,7 @@ export function DeckDetailPage() {
             <CardRow
               key={card.id}
               card={card}
+              onEdit={() => setCardToEdit(card)}
               onDelete={() => setCardToDelete({ id: card.id, word: card.word })}
             />
           ))}
@@ -86,6 +90,13 @@ export function DeckDetailPage() {
       <AddCardsModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        deckId={id}
+        language={deck.language}
+      />
+
+      <EditCardModal
+        card={cardToEdit}
+        onClose={() => setCardToEdit(undefined)}
         deckId={id}
         language={deck.language}
       />

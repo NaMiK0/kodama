@@ -29,3 +29,11 @@ export function createCard(deckId: number, payload: CardCreatePayload): Promise<
 export function deleteCard(deckId: number, cardId: number): Promise<void> {
   return apiFetch(`/decks/${deckId}/cards/${cardId}`, { method: 'DELETE' })
 }
+
+export function updateCard(
+  deckId: number,
+  cardId: number,
+  payload: CardCreatePayload,
+): Promise<Card> {
+  return apiFetch<Card>(`/decks/${deckId}/cards/${cardId}`, { method: 'PATCH', json: payload })
+}

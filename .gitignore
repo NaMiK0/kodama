@@ -25,6 +25,8 @@ backend/uploads/
 .vscode/
 .claude/
 .DS_Store
+CLAUDE.md
+graphify-out
 
 # ── Frontend (появится позже) ─────────────────────────────
 node_modules/
