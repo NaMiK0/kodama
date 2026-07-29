@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
+import { PronunciationBlock } from '@/features/pronunciation/ui/PronunciationBlock'
 import { useLanguage } from '@/shared/lib/LanguageProvider'
 import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
@@ -221,6 +222,10 @@ export function StudySessionPage() {
               <p className="text-sm text-ink-muted">Правильный ответ: {verdict.expected.join(', ')}</p>
             )}
             <Button onClick={handleNext}>Далее</Button>
+
+            {/* key размонтирует блок на каждом новом задании — иначе состояние
+                записи прошлой карточки протекло бы в следующую. */}
+            <PronunciationBlock key={index} cardId={card.id} />
           </div>
         )}
       </div>
