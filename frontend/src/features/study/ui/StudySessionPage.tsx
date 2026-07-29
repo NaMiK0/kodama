@@ -5,13 +5,37 @@ import { useLanguage } from '@/shared/lib/LanguageProvider'
 import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
 
-import { fetchDueCards, fetchNewCards, type ReviewResult, type StudyItem } from '../api'
-import { NEW_CARDS_LIMIT, useSubmitReview } from '../hooks'
+import { fetchDueCards, fetchNewCards, type AnswerKind, type StudyItem } from '../api'
+import { NEW_CARDS_LIMIT, useCheckAnswer, useSubmitReview } from '../hooks'
 import { StudySummary } from './StudySummary'
 
 type Phase = 'loading' | 'question' | 'verdict' | 'empty' | 'summary'
 
 const TARGET_LANGUAGE_NAMES = { en: 'английском', ja: 'японском' } as const
+
+// Ошибочная карточка возвращается в конец очереди для повторной попытки —
+// повтор проверяется через /study/check-answer (см. useCheckAnswer) и не
+// трогает расписание: правильность решает сервер, а не подсчёт локально,
+// но статистику SM-2 портить второй попыткой не нужно.
+type QueueEntry = { item: StudyItem; isRetry: boolean }
+
+// Верное подмножество ReviewResult/AnswerCheckResult — экрану для рендера
+// вердикта больше ничего не нужно, а типы двух эндпоинтов иначе пришлось бы
+// объединять в union ради общих трёх полей.
+type Verdict = { correct: boolean; kind: AnswerKind; expected: string[] }
+
+// Fisher-Yates — иначе перемешивание смещено в сторону исходного порядка
+// (например, naive `sort(() => Math.random() - 0.5)`).
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const iValue = result[i] as T
+    result[i] = result[j] as T
+    result[j] = iValue
+  }
+  return result
+}
 
 export function StudySessionPage() {
   const { language } = useLanguage()
@@ -21,14 +45,18 @@ export function StudySessionPage() {
   // due-кэш инвалидируется после каждого review (см. useSubmitReview), и живой
   // запрос пересобирал бы список прямо по ходу сессии — задания уезжали бы
   // из-под пользователя после каждого ответа.
-  const [queue, setQueue] = useState<StudyItem[]>([])
+  const [queue, setQueue] = useState<QueueEntry[]>([])
+  // Знаменатель для итога — count исходных заданий, зафиксированный при
+  // загрузке. queue.length растёт с повторами и для «N из M» не годится.
+  const [originalTotal, setOriginalTotal] = useState(0)
   const [phase, setPhase] = useState<Phase>('loading')
   const [index, setIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [answer, setAnswer] = useState('')
-  const [verdict, setVerdict] = useState<ReviewResult | null>(null)
+  const [verdict, setVerdict] = useState<Verdict | null>(null)
 
   const submitReview = useSubmitReview()
+  const checkAnswer = useCheckAnswer()
 
   useEffect(() => {
     let cancelled = false
@@ -39,8 +67,9 @@ export function StudySessionPage() {
         fetchNewCards(language, NEW_CARDS_LIMIT),
       ])
       if (cancelled) return
-      const combined = [...due, ...fresh]
-      setQueue(combined)
+      const combined = shuffle([...due, ...fresh])
+      setQueue(combined.map((item) => ({ item, isRetry: false })))
+      setOriginalTotal(combined.length)
       setPhase(combined.length > 0 ? 'question' : 'empty')
     }
 
@@ -50,18 +79,27 @@ export function StudySessionPage() {
     }
   }, [language])
 
-  const item = queue[index]
+  const entry = queue[index]
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!item || !answer.trim() || submitReview.isPending) return
+    if (!entry || !answer.trim() || submitReview.isPending || checkAnswer.isPending) return
 
-    const result = await submitReview.mutateAsync({
-      card_id: item.card.id,
+    const payload = {
+      card_id: entry.item.card.id,
       answer: answer.trim(),
-      direction: item.direction,
-    })
-    if (result.correct) setCorrectCount((prev) => prev + 1)
+      direction: entry.item.direction,
+    }
+    const result = entry.isRetry
+      ? await checkAnswer.mutateAsync(payload)
+      : await submitReview.mutateAsync(payload)
+
+    // Только исходная (влияющая на SM-2) попытка идёт в статистику сессии —
+    // повтор существует, чтобы закрепить слово, а не поднять цифру в итоге.
+    if (!entry.isRetry && result.correct) setCorrectCount((prev) => prev + 1)
+    if (!result.correct) {
+      setQueue((prev) => [...prev, { item: entry.item, isRetry: true }])
+    }
     setVerdict(result)
     setPhase('verdict')
   }
@@ -106,12 +144,12 @@ export function StudySessionPage() {
   }
 
   if (phase === 'summary') {
-    return <StudySummary total={queue.length} correctCount={correctCount} />
+    return <StudySummary total={originalTotal} correctCount={correctCount} />
   }
 
-  if (!item) return null
+  if (!entry) return null
 
-  const { card, direction } = item
+  const { card, direction } = entry.item
 
   // Чтение (reference) можно показать только когда оно НЕ является ответом:
   // при "язык → RU" это подсказка к прочтению, при "RU → язык" — прямая
@@ -121,11 +159,25 @@ export function StudySessionPage() {
 
   return (
     <div className="mx-auto max-w-md px-6 py-16">
+      {/* Исходные задания всегда занимают начало очереди (индексы
+          0..originalTotal-1) — повторы дописываются только в хвост, поэтому
+          "N / M" для них остаётся стабильным знаменателем. На повторе цифры
+          не показываем: их количество может ещё вырасти по ходу сессии,
+          если человек снова ошибётся, — обещать точный остаток нечестно. */}
       <p className="mb-6 text-center text-sm text-ink-muted">
-        {index + 1} / {queue.length}
+        {entry.isRetry ? 'Повторение' : `${index + 1} / ${originalTotal}`}
       </p>
 
-      <div className="rounded-xl border border-line bg-surface p-8 text-center shadow-card">
+      <div className="relative rounded-xl border border-line bg-surface p-8 text-center shadow-card">
+        {/* Пометка в углу, а не в потоке текста — читается как ярлык на
+            карточке, а не как ещё одна строка контента. Внутри границы:
+            выступающая наружу метка спорит с формой карточки. */}
+        {entry.isRetry && (
+          <span className="absolute top-3 left-3 rounded-md bg-retry-soft px-2 py-0.5 text-xs font-medium text-retry">
+            Повтор
+          </span>
+        )}
+
         {/* Направление больше не выбирается на входе и меняется от задания к
             заданию — значит, экран обязан сказать, что именно от человека
             хотят, иначе он гадает по подписи поля ввода. */}
@@ -154,7 +206,7 @@ export function StudySessionPage() {
               onChange={(event) => setAnswer(event.target.value)}
               autoFocus
             />
-            <Button type="submit" loading={submitReview.isPending}>
+            <Button type="submit" loading={submitReview.isPending || checkAnswer.isPending}>
               Проверить
             </Button>
           </form>

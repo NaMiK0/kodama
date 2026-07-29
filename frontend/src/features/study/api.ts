@@ -43,3 +43,15 @@ export function fetchNewCards(language: StudyLanguage, limit: number): Promise<S
 export function submitReview(payload: ReviewPayload): Promise<ReviewResult> {
   return apiFetch<ReviewResult>('/study/review', { method: 'POST', json: payload })
 }
+
+export type AnswerCheckResult = {
+  correct: boolean
+  kind: AnswerKind
+  expected: string[]
+}
+
+// Тот же контракт запроса, что у /study/review, но проверка не пишет
+// в расписание — ей закрываются повторы ошибочных карточек внутри сессии.
+export function checkAnswer(payload: ReviewPayload): Promise<AnswerCheckResult> {
+  return apiFetch<AnswerCheckResult>('/study/check-answer', { method: 'POST', json: payload })
+}

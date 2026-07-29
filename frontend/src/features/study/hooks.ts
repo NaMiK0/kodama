@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { StudyLanguage } from '@/shared/lib/LanguageProvider'
 
-import { fetchDueCards, fetchNewCards, submitReview, type ReviewPayload } from './api'
+import { checkAnswer, fetchDueCards, fetchNewCards, submitReview, type ReviewPayload } from './api'
 
 export const STUDY_QUERY_KEY = ['study'] as const
 export const NEW_CARDS_LIMIT = 10
@@ -39,5 +39,12 @@ export function useSubmitReview() {
     // странице колод, которая в момент сессии не смонтирована и не перечитает
     // данные, пока пользователь туда не вернётся.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: STUDY_QUERY_KEY }),
+  })
+}
+
+// Без invalidateQueries: проверка не пишет в расписание, кэш /study не устарел.
+export function useCheckAnswer() {
+  return useMutation({
+    mutationFn: (payload: ReviewPayload) => checkAnswer(payload),
   })
 }
