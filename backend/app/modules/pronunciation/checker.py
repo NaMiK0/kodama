@@ -16,12 +16,13 @@ class PronunciationResult:
 class PronunciationChecker(Protocol):
     """Абстракция проверки произношения.
 
-    Реализация выбирается по языку карточки:
-    английский — фонемный анализ, японский — транскрибация Whisper.
+    Единая реализация для обоих языков — транскрибация Whisper с последующим
+    сравнением текста с эталоном (фонемный анализ английского не прошёл
+    проверку на живых данных, см. WhisperChecker).
 
     expected: допустимые формы слова. Первый элемент — канонический reference
-    (эталон произношения); остальные — альтернативные записи (для японского
-    Whisper может выдать кандзи там, где reference хираганой).
+    (эталон произношения); остальные — альтернативные записи (Whisper может
+    выдать кандзи там, где reference хираганой, или вариант написания на EN).
     """
 
     def check(self, audio_path: str, expected: list[str]) -> PronunciationResult: ...
@@ -42,17 +43,14 @@ class StubChecker:
 def get_checker(language: Language) -> PronunciationChecker:
     """Ленивый синглтон: модель загружается один раз на процесс.
 
-    Импорты реальных реализаций — ВНУТРИ функции, чтобы процесс API
-    никогда не тянул torch: ML нужен только воркеру.
+    Импорт реальной реализации — ВНУТРИ функции, чтобы процесс API
+    никогда не тянул torch: ML нужен только воркеру. lru_cache на language
+    даёт по синглтону-инстансу WhisperChecker на каждый язык (у них разная
+    логика сравнения текста), сама модель Whisper внутри общая (кэш HF).
     """
     if settings.pronunciation_backend != "real":
         return StubChecker()
 
-    if language == Language.JA:
-        from app.modules.pronunciation.whisper_checker import WhisperChecker
+    from app.modules.pronunciation.whisper_checker import WhisperChecker
 
-        return WhisperChecker()
-
-    from app.modules.pronunciation.phoneme_checker import PhonemeChecker
-
-    return PhonemeChecker()
+    return WhisperChecker(language)

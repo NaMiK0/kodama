@@ -16,16 +16,18 @@ function verdictLabel(score: number): { text: string; className: string } {
   return { text: 'Не расслышал', className: 'text-danger' }
 }
 
-function DetailPanel({ transcript, detail }: { transcript: string | null; detail: Record<string, unknown> | null }) {
+// "Распознано как" (JA-only, из detail.matched) остаётся за раскрывашкой —
+// нюанс каны/кандзи, а не то, что нужно видеть сразу. Транскрипт (что услышал
+// Whisper) — теперь основная обратная связь, показывается сразу при
+// несовпадении, без клика.
+function DetailPanel({ detail }: { detail: Record<string, unknown> | null }) {
   const [open, setOpen] = useState(false)
-
-  const mismatches = Array.isArray(detail?.mismatches)
-    ? (detail.mismatches as { expected: string; heard: string }[])
-    : null
   const matched = typeof detail?.matched === 'string' ? detail.matched : null
 
+  if (!matched) return null
+
   return (
-    <div className="mt-2 text-left">
+    <div className="mt-2">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -37,17 +39,7 @@ function DetailPanel({ transcript, detail }: { transcript: string | null; detail
 
       {open && (
         <div className="mt-2 rounded-lg bg-surface-soft p-3 text-xs text-ink-muted">
-          {transcript && <p className="mb-1">Услышано: {transcript}</p>}
-          {matched && <p>Распознано как: {matched}</p>}
-          {mismatches && mismatches.length > 0 && (
-            <ul className="flex flex-col gap-1">
-              {mismatches.map((m, i) => (
-                <li key={i}>
-                  ожидалось «{m.expected}» — услышано «{m.heard}»
-                </li>
-              ))}
-            </ul>
-          )}
+          <p>Распознано как: {matched}</p>
         </div>
       )}
     </div>
@@ -141,7 +133,10 @@ export function PronunciationBlock({ cardId }: { cardId: number }) {
           <p className={`text-sm font-medium ${verdictLabel(result.score).className}`}>
             {verdictLabel(result.score).text}
           </p>
-          <DetailPanel transcript={result.transcript} detail={result.detail} />
+          {result.score < GOOD_PRONUNCIATION && result.transcript && (
+            <p className="mt-1 text-sm text-ink-muted">Услышано: {result.transcript}</p>
+          )}
+          <DetailPanel detail={result.detail} />
           <button
             type="button"
             onClick={reset}

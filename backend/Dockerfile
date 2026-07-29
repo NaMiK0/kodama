@@ -3,11 +3,9 @@ FROM python:3.12-slim
 # uv — тот же менеджер зависимостей, что и локально
 COPY --from=ghcr.io/astral-sh/uv:0.11.31 /uv /usr/local/bin/uv
 
-# Системные зависимости:
-#   ffmpeg    — декодирование аудио (нужен обоим чекерам произношения)
-#   espeak-ng — G2P «буквы -> IPA» для фонемного анализа английского
+# ffmpeg — декодирование аудио перед подачей в Whisper
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg espeak-ng \
+    && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED=1 \
