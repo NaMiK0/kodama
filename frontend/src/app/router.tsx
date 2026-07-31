@@ -8,6 +8,7 @@ import { RequireGuest } from '@/features/auth/ui/RequireGuest'
 import { DeckDetailPage } from '@/features/decks/ui/DeckDetailPage'
 import { DecksPage } from '@/features/decks/ui/DecksPage'
 import { StudySessionPage } from '@/features/study/ui/StudySessionPage'
+import { TriagePage } from '@/features/study/ui/TriagePage'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
 
 import { AppShell } from './AppShell'
@@ -50,6 +51,7 @@ export function AppRouter() {
         >
           <Route path="/" element={<DecksPage />} />
           <Route path="/decks/:deckId" element={<DeckDetailPage />} />
+          <Route path="/decks/:deckId/triage" element={<TriagePage />} />
           <Route path="/study" element={<StudySessionPage />} />
         </Route>
       </Route>

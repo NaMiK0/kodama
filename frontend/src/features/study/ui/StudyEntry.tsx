@@ -32,7 +32,7 @@ export function StudyEntry() {
   )
 }
 
-function repetitionsWord(count: number): string {
+export function repetitionsWord(count: number): string {
   const lastTwo = count % 100
   if (lastTwo >= 11 && lastTwo <= 14) return 'повторений'
   const last = count % 10

@@ -3,6 +3,13 @@ from dataclasses import dataclass
 INITIAL_EASE_FACTOR = 2.5
 MIN_EASE_FACTOR = 1.3
 
+# Разбор колоды (свайп "Знаю"): самооценка без проверки ответом. Отправляем
+# карточку на ту же ступень лестницы, где стоит однажды подтверждённое слово
+# (repetitions=1) — следующий честный ответ продолжит обычным sm2(interval=6),
+# без специальных случаев. Отдельная константа, а не sm2(quality=5) с нуля:
+# тот дал бы interval=1 и вернул слово уже завтра, не сняв нагрузку с бюджета.
+SELF_ASSESSED_KNOWN_INTERVAL = 4
+
 @dataclass(frozen=True)
 class Sm2Result:
     ease_factor: float

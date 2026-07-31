@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { PronunciationBlock } from '@/features/pronunciation/ui/PronunciationBlock'
 import { useLanguage } from '@/shared/lib/LanguageProvider'
@@ -41,6 +41,14 @@ function shuffle<T>(items: T[]): T[] {
 export function StudySessionPage() {
   const { language } = useLanguage()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  // Необязательный параметр — изучение конкретной колоды со страницы колоды.
+  // Без него сессия остаётся общей по языку (см. design.md: намеренное
+  // решение — выбор колоды каждый раз приучил бы избегать тяжёлых).
+  const deckParam = searchParams.get('deck')
+  const deckId = deckParam ? Number(deckParam) : undefined
+  const backTo = deckId !== undefined ? `/decks/${deckId}` : '/'
 
   // Снимок заданий на момент старта сессии — намеренно НЕ через useQuery.
   // due-кэш инвалидируется после каждого review (см. useSubmitReview), и живой
@@ -64,8 +72,8 @@ export function StudySessionPage() {
 
     async function load() {
       const [due, fresh] = await Promise.all([
-        fetchDueCards(language),
-        fetchNewCards(language, NEW_CARDS_LIMIT),
+        fetchDueCards(language, deckId),
+        fetchNewCards(language, NEW_CARDS_LIMIT, deckId),
       ])
       if (cancelled) return
       const combined = shuffle([...due, ...fresh])
@@ -78,7 +86,7 @@ export function StudySessionPage() {
     return () => {
       cancelled = true
     }
-  }, [language])
+  }, [language, deckId])
 
   const entry = queue[index]
 
@@ -136,16 +144,25 @@ export function StudySessionPage() {
   if (phase === 'empty') {
     return (
       <div className="mx-auto max-w-md px-6 py-16 text-center">
-        <p className="mb-4 text-ink-muted">Учить пока нечего</p>
-        <Button variant="secondary" onClick={() => navigate('/')}>
-          Назад к колодам
+        <p className="mb-4 text-ink-muted">
+          {deckId !== undefined ? 'В этой колоде на сегодня всё' : 'Учить пока нечего'}
+        </p>
+        <Button variant="secondary" onClick={() => navigate(backTo)}>
+          {deckId !== undefined ? '← К колоде' : 'Назад к колодам'}
         </Button>
       </div>
     )
   }
 
   if (phase === 'summary') {
-    return <StudySummary total={originalTotal} correctCount={correctCount} />
+    return (
+      <StudySummary
+        total={originalTotal}
+        correctCount={correctCount}
+        backTo={backTo}
+        backLabel={deckId !== undefined ? '← К колоде' : 'К колодам'}
+      />
+    )
   }
 
   if (!entry) return null

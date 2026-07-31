@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router'
 
 import { Button } from '@/shared/ui/Button'
 
-type Props = { total: number; correctCount: number }
+type Props = { total: number; correctCount: number; backTo?: string; backLabel?: string }
 
-export function StudySummary({ total, correctCount }: Props) {
+export function StudySummary({ total, correctCount, backTo = '/', backLabel = 'К колодам' }: Props) {
   const navigate = useNavigate()
 
   return (
@@ -13,7 +13,7 @@ export function StudySummary({ total, correctCount }: Props) {
       <p className="mb-8 text-ink-muted">
         {correctCount} из {total} правильно
       </p>
-      <Button onClick={() => navigate('/')}>К колодам</Button>
+      <Button onClick={() => navigate(backTo)}>{backLabel}</Button>
     </div>
   )
 }

@@ -49,7 +49,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     // WS нужен только авторизованному контуру — соединение живёт здесь,
     // а не в App.tsx, где ещё нет сессии.
     <ServerEventsProvider>
-      <div className="min-h-dvh bg-canvas">
+      {/* Колонка с растущим main: страницы вроде разбора колоды могут занять
+          всю высоту под шапкой (там подсветка краёв экрана должна доходить
+          до низа, а не обрываться по высоте содержимого). */}
+      <div className="flex min-h-dvh flex-col bg-canvas">
         <header className="flex items-center justify-between border-b border-line px-6 py-3">
           <Link to="/" className="font-jp text-xl text-ink select-none">
             木霊
@@ -71,7 +74,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main>{children}</main>
+        {/* flex-колонка, а не просто flex-1: страница-ребёнок растягивается
+            через flex-1 у себя, без процентных высот (они требуют, чтобы у
+            родителя высота была определена, и легко ломаются). Страницы без
+            flex-1 занимают высоту по содержимому — как и раньше. */}
+        <main className="flex flex-1 flex-col">{children}</main>
       </div>
     </ServerEventsProvider>
   )

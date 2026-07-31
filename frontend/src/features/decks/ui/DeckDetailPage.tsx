@@ -60,8 +60,11 @@ export function DeckDetailPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => setDeckDeleteOpen(true)}>
+          <Button variant="danger-soft" onClick={() => setDeckDeleteOpen(true)}>
             Удалить колоду
+          </Button>
+          <Button variant="secondary" onClick={() => navigate(`/decks/${id}/triage`)}>
+            Разобрать колоду
           </Button>
           <Button onClick={() => setModalOpen(true)}>Добавить карточки</Button>
         </div>

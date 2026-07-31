@@ -1,12 +1,16 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ai'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-soft' | 'ai'
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-accent text-accent-ink hover:bg-accent-strong',
   secondary: 'border border-line bg-surface text-ink hover:bg-surface-soft',
   ghost: 'text-ink-muted hover:bg-surface-soft hover:text-ink',
   danger: 'bg-danger text-accent-ink hover:opacity-90',
+  // Мягкая розовая подложка вместо сплошной заливки — для действий, которые
+  // ещё не сам необратимый шаг (открывают подтверждение), а не мгновенное
+  // удаление: предупреждает тоном, не пугает интенсивностью.
+  'danger-soft': 'bg-danger-soft text-danger hover:opacity-80',
   // Мягкая подложка, а не сплошная заливка: действие заметное, но вторичное —
   // главным на экране остаётся зелёное «Создать колоду».
   // overflow-hidden держит блик (.ai-shimmer::after) внутри кнопки.

@@ -23,6 +23,9 @@ class ReviewRequest(BaseModel):
     direction: AnswerDirection
     # Заполнится, когда появится проверка произношения (0..1).
     pronunciation_score: float | None = Field(default=None, ge=0.0, le=1.0)
+    # Сколько раз слово провалили в фазе заучивания (разбор колоды) до
+    # выпуска. Считает клиент — сервер верит на слово, как и с pronunciation_score.
+    learning_mistakes: int = Field(default=0, ge=0)
 
 
 class ReviewResult(BaseModel):
@@ -50,3 +53,7 @@ class AnswerCheckResult(BaseModel):
     correct: bool
     kind: str            # exact | fuzzy | llm | incorrect
     expected: list[str]  # чтобы UI мог показать правильный ответ
+
+
+class MarkKnownRequest(BaseModel):
+    card_id: int

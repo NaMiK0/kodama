@@ -14,14 +14,22 @@ POOR_PRONUNCIATION = 0.5
 
 
 def composite_quality(
-    answer_kind: str, pronunciation_score: float | None = None
+    answer_kind: str,
+    pronunciation_score: float | None = None,
+    learning_mistakes: int = 0,
 ) -> int:
     """answer_kind: exact | fuzzy | llm | incorrect.
-    pronunciation_score: 0..1, либо None — если произношение не проверялось."""
+    pronunciation_score: 0..1, либо None — если произношение не проверялось.
+    learning_mistakes: сколько раз слово провалили в фазе заучивания (разбор
+    колоды) ДО того, как выпустилось в расписание двумя верными ответами.
+    Туго давшееся слово получает первый интервал короче — так же, как
+    неудачное произношение снижает оценку, а не проваливает её целиком."""
     if answer_kind == "incorrect":
         return INCORRECT  # перевод неверный — низкая оценка, интервал сбрасывается
 
     base = CORRECT_EXACT if answer_kind == "exact" else CORRECT_APPROX
+    if learning_mistakes > 0:
+        base = max(SHAKY_PRONUNCIATION, base - 1)
 
     if pronunciation_score is None:
         return base  # произношения не было — оцениваем только перевод
