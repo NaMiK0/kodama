@@ -5,6 +5,8 @@ import { AuthLayout } from '@/features/auth/ui/AuthLayout'
 import { GoogleCallback } from '@/features/auth/ui/GoogleCallback'
 import { RequireAuth } from '@/features/auth/ui/RequireAuth'
 import { RequireGuest } from '@/features/auth/ui/RequireGuest'
+import { SettingsPage } from '@/features/auth/ui/SettingsPage'
+import { CollectionPage } from '@/features/decks/ui/CollectionPage'
 import { DeckDetailPage } from '@/features/decks/ui/DeckDetailPage'
 import { DecksPage } from '@/features/decks/ui/DecksPage'
 import { StudySessionPage } from '@/features/study/ui/StudySessionPage'
@@ -50,9 +52,11 @@ export function AppRouter() {
           }
         >
           <Route path="/" element={<DecksPage />} />
+          <Route path="/collection" element={<CollectionPage />} />
           <Route path="/decks/:deckId" element={<DeckDetailPage />} />
           <Route path="/decks/:deckId/triage" element={<TriagePage />} />
           <Route path="/study" element={<StudySessionPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

@@ -1,13 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
+import { useMe } from '@/features/auth/hooks'
 import { PronunciationBlock } from '@/features/pronunciation/ui/PronunciationBlock'
 import { useLanguage } from '@/shared/lib/LanguageProvider'
 import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
 
 import { fetchDueCards, fetchNewCards, type AnswerKind, type StudyItem } from '../api'
-import { NEW_CARDS_LIMIT, useCheckAnswer, useSubmitReview } from '../hooks'
+import { useCheckAnswer, useNewCardsLimit, useSubmitReview } from '../hooks'
 import { StudySummary } from './StudySummary'
 
 type Phase = 'loading' | 'question' | 'verdict' | 'empty' | 'summary'
@@ -66,6 +67,8 @@ export function StudySessionPage() {
 
   const submitReview = useSubmitReview()
   const checkAnswer = useCheckAnswer()
+  const newCardsLimit = useNewCardsLimit()
+  const { data: user } = useMe()
 
   useEffect(() => {
     let cancelled = false
@@ -73,7 +76,7 @@ export function StudySessionPage() {
     async function load() {
       const [due, fresh] = await Promise.all([
         fetchDueCards(language, deckId),
-        fetchNewCards(language, NEW_CARDS_LIMIT, deckId),
+        fetchNewCards(language, newCardsLimit, deckId),
       ])
       if (cancelled) return
       const combined = shuffle([...due, ...fresh])
@@ -86,7 +89,7 @@ export function StudySessionPage() {
     return () => {
       cancelled = true
     }
-  }, [language, deckId])
+  }, [language, deckId, newCardsLimit])
 
   const entry = queue[index]
 
@@ -138,12 +141,12 @@ export function StudySessionPage() {
   }, [phase, index, queue.length])
 
   if (phase === 'loading') {
-    return <div className="mx-auto max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
+    return <div className="mx-auto w-full max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
   }
 
   if (phase === 'empty') {
     return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
+      <div className="mx-auto w-full max-w-md px-6 py-16 text-center">
         <p className="mb-4 text-ink-muted">
           {deckId !== undefined ? 'В этой колоде на сегодня всё' : 'Учить пока нечего'}
         </p>
@@ -176,7 +179,7 @@ export function StudySessionPage() {
   const hint = direction === 'to_russian' && card.reference !== card.word ? card.reference : null
 
   return (
-    <div className="mx-auto max-w-md px-6 py-16">
+    <div className="mx-auto w-full max-w-md px-6 py-16">
       {/* Исходные задания всегда занимают начало очереди (индексы
           0..originalTotal-1) — повторы дописываются только в хвост, поэтому
           "N / M" для них остаётся стабильным знаменателем. На повторе цифры
@@ -242,7 +245,9 @@ export function StudySessionPage() {
 
             {/* key размонтирует блок на каждом новом задании — иначе состояние
                 записи прошлой карточки протекло бы в следующую. */}
-            <PronunciationBlock key={index} cardId={card.id} />
+            {user?.offer_pronunciation !== false && (
+              <PronunciationBlock key={index} cardId={card.id} />
+            )}
           </div>
         )}
       </div>

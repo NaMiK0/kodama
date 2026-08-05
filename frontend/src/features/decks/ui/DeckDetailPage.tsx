@@ -29,7 +29,7 @@ export function DeckDetailPage() {
 
   if (deckPending || !deck) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mx-auto w-full max-w-4xl px-6 py-10">
         <p className="text-ink-muted">Загрузка…</p>
       </div>
     )
@@ -47,7 +47,7 @@ export function DeckDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <Link to="/" className="mb-2 inline-block text-sm text-ink-muted hover:text-ink">
         ← Мои колоды
       </Link>

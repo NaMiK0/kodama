@@ -8,6 +8,14 @@ class DeckSource(StrEnum):
     USER_CREATED = "user_created"
     AI_GENERATED = "ai_generated"
 
+class DeckTier(StrEnum):
+    """Тир колоды в коллекции — по среднему ease_factor SM-2 её карточек.
+    Чем увереннее пользователь отвечает, тем выше ease_factor растит SM-2,
+    поэтому он и берётся мерой «насколько хорошо колода выучена»."""
+    BRONZE = "bronze"
+    SILVER = "silver"
+    GOLD = "gold"
+
 class Level(StrEnum):
     # Английский (CEFR)
     A1 = "A1"

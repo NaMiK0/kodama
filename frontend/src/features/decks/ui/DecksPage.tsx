@@ -38,7 +38,7 @@ export function DecksPage() {
   const hasContent = (decks && decks.length > 0) || generationJobs.length > 0
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-medium text-ink">Мои колоды</h1>
         <div className="flex gap-2">

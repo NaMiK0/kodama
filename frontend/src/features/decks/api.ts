@@ -36,9 +36,21 @@ export const LANGUAGE_NAMES = {
   ja: 'Японский',
 } as const satisfies Record<StudyLanguage, string>
 
+export type DeckTier = 'bronze' | 'silver' | 'gold'
+
+export type CollectionEntry = {
+  deck: Deck
+  tier: DeckTier
+  avg_ease_factor: number
+}
+
 export function fetchDecks(language: StudyLanguage, limit?: number): Promise<Deck[]> {
   const query = limit ? `language=${language}&limit=${limit}` : `language=${language}`
   return apiFetch<Deck[]>(`/decks?${query}`)
+}
+
+export function fetchCollection(language: StudyLanguage): Promise<CollectionEntry[]> {
+  return apiFetch<CollectionEntry[]>(`/decks/collection?language=${language}`)
 }
 
 export function fetchDeck(id: number): Promise<Deck> {

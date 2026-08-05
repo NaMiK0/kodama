@@ -1,10 +1,56 @@
 import { motion } from 'motion/react'
 import { useState } from 'react'
 
+import type { CollectionEntry } from '@/features/decks/api'
+import { TierDeckCard } from '@/features/decks/ui/TierDeckCard'
 import { useTheme } from '@/shared/lib/ThemeProvider'
 import type { Theme } from '@/shared/lib/theme'
 import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
+
+// Фейковые данные только для превью металлического покрытия коллекции —
+// настоящий компонент, чтобы то, что видно здесь, совпадало с продакшеном.
+const TIER_PREVIEW_ENTRIES: CollectionEntry[] = [
+  {
+    deck: {
+      id: -1,
+      topic: 'Разговорные фразы',
+      language: 'en',
+      level: 'A1',
+      source: 'user_created',
+      created_at: new Date().toISOString(),
+      card_count: 12,
+    },
+    tier: 'bronze',
+    avg_ease_factor: 2.0,
+  },
+  {
+    deck: {
+      id: -2,
+      topic: 'Деловая переписка',
+      language: 'en',
+      level: 'B2',
+      source: 'user_created',
+      created_at: new Date().toISOString(),
+      card_count: 20,
+    },
+    tier: 'silver',
+    avg_ease_factor: 2.45,
+  },
+  {
+    deck: {
+      id: -3,
+      topic: 'JLPT N3 · Кандзи',
+      language: 'ja',
+      level: 'N3',
+      source: 'ai_generated',
+      created_at: new Date().toISOString(),
+      card_count: 30,
+    },
+    tier: 'gold',
+    avg_ease_factor: 2.8,
+  },
+]
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 const THEME_LABELS: Record<Theme, string> = {
@@ -111,6 +157,15 @@ export function TokensPreview() {
               <Button variant="ghost">Пропустить</Button>
               <Button disabled>Недоступно</Button>
             </div>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <p className="text-sm text-ink-subtle">Коллекция — металлическое покрытие по тиру</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {TIER_PREVIEW_ENTRIES.map((entry) => (
+              <TierDeckCard key={entry.deck.id} entry={entry} />
+            ))}
           </div>
         </section>
 

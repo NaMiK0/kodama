@@ -4,13 +4,23 @@ export type User = {
   id: number
   email: string
   created_at: string
+  offer_pronunciation: boolean
+  new_cards_daily_limit: number
 }
 
 export type LoginPayload = { email: string; password: string }
 export type RegisterPayload = { email: string; password: string }
+export type UserSettingsUpdate = {
+  offer_pronunciation?: boolean
+  new_cards_daily_limit?: number
+}
 
 export function fetchMe(): Promise<User> {
   return apiFetch<User>('/auth/me')
+}
+
+export function updateSettings(payload: UserSettingsUpdate): Promise<User> {
+  return apiFetch<User>('/auth/me/settings', { method: 'PATCH', json: payload })
 }
 
 export function login({ email, password }: LoginPayload): Promise<void> {

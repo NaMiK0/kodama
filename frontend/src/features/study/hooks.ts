@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { useMe } from '@/features/auth/hooks'
 import type { StudyLanguage } from '@/shared/lib/LanguageProvider'
 
 import {
@@ -12,7 +13,14 @@ import {
 } from './api'
 
 export const STUDY_QUERY_KEY = ['study'] as const
-export const NEW_CARDS_LIMIT = 20
+// Пока настройки пользователя не загрузились — тот же дефолт, что и на
+// бэкенде (см. User.new_cards_daily_limit).
+export const DEFAULT_NEW_CARDS_LIMIT = 20
+
+export function useNewCardsLimit(): number {
+  const { data: user } = useMe()
+  return user?.new_cards_daily_limit ?? DEFAULT_NEW_CARDS_LIMIT
+}
 
 export function studyDueKey(language: StudyLanguage, deckId?: number) {
   return [...STUDY_QUERY_KEY, 'due', language, deckId] as const
@@ -23,7 +31,7 @@ export function studyNewKey(language: StudyLanguage, deckId?: number) {
 }
 
 // Для бейджа на входе: "N карточек на сегодня" должно совпадать с тем, что
-// реально войдёт в сессию (due + до NEW_CARDS_LIMIT новых) — иначе кнопка
+// реально войдёт в сессию (due + до лимита новых из настроек) — иначе кнопка
 // обещает одно число, а сессия покажет другое. deckId — тот же бейдж, но
 // на странице конкретной колоды (см. DeckDetailPage).
 export function useDueCards(language: StudyLanguage, deckId?: number) {
@@ -34,9 +42,10 @@ export function useDueCards(language: StudyLanguage, deckId?: number) {
 }
 
 export function useNewCards(language: StudyLanguage, deckId?: number) {
+  const limit = useNewCardsLimit()
   return useQuery({
     queryKey: studyNewKey(language, deckId),
-    queryFn: () => fetchNewCards(language, NEW_CARDS_LIMIT, deckId),
+    queryFn: () => fetchNewCards(language, limit, deckId),
   })
 }
 

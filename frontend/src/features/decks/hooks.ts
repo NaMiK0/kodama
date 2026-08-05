@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { StudyLanguage } from '@/shared/lib/LanguageProvider'
 
-import { createDeck, deleteDeck, fetchDeck, fetchDecks, type DeckCreatePayload } from './api'
+import {
+  createDeck,
+  deleteDeck,
+  fetchCollection,
+  fetchDeck,
+  fetchDecks,
+  type DeckCreatePayload,
+} from './api'
 
 /**
  * Общий префикс всех ключей, связанных с колодами. TanStack сопоставляет ключи
@@ -35,6 +42,17 @@ export function useDeck(id: number) {
   return useQuery({
     queryKey: deckDetailKey(id),
     queryFn: () => fetchDeck(id),
+  })
+}
+
+export function collectionKey(language: StudyLanguage) {
+  return [...DECKS_QUERY_KEY, 'collection', language] as const
+}
+
+export function useCollection(language: StudyLanguage) {
+  return useQuery({
+    queryKey: collectionKey(language),
+    queryFn: () => fetchCollection(language),
   })
 }
 

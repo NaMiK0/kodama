@@ -13,6 +13,14 @@ class UserRead(BaseModel):
     id: int
     email: EmailStr
     created_at: datetime
+    offer_pronunciation: bool
+    new_cards_daily_limit: int
+
+
+class UserSettingsUpdate(BaseModel):
+    offer_pronunciation: bool | None = None
+    new_cards_daily_limit: int | None = Field(default=None, ge=1, le=50)
+
 
 class Token(BaseModel):
     access_token: str

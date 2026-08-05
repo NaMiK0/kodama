@@ -184,6 +184,70 @@
     animation: kodama-shimmer 0.9s ease-out;
   }
 
+  /* Плитка колоды, полностью разобранной и выученной (коллекция) — покрыта
+     металлом по тиру (медь/серебро/золото), как трофей. Цвета самого металла
+     НЕ зависят от темы (как атмосферная forest-панель, см. выше): медь
+     остаётся медью что в светлом, что в тёмном интерфейсе — это иллюстрация,
+     а не элемент UI-хромы, поэтому не семантический токен.
+
+     Три слоя изображают физический лист металла, а не тонированную карточку:
+     1) direction-gradient — сам металл, от светлой грани к тени, ЗАМЕТНО
+        насыщенный (mix 45–55%), а не еле видный оттенок поверх surface;
+     2) radial blik в углу — будто на плиту падает свет сверху слева;
+     3) ::before — диагональный блик поверх всего, самый яркий слой.
+     На тёмном фоне surface сам тёмный, поэтому тот же mix% уже давал
+     достаточный контраст; на светлом (surface почти белый) без насыщенности
+     и блика металл на глаз неотличим от простой рамки — отсюда все три слоя. */
+  .tier-plate {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tier-plate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 28%, var(--tier-sheen) 48%, transparent 70%);
+    opacity: 0.85;
+  }
+
+  .tier-bronze {
+    --tier-sheen: color-mix(in srgb, #fff3e6 90%, transparent);
+    border-color: color-mix(in srgb, #7c4415 70%, transparent);
+    background:
+      radial-gradient(140% 160% at 10% -20%, color-mix(in srgb, #f0c199 60%, transparent), transparent 55%),
+      linear-gradient(
+        150deg,
+        color-mix(in srgb, #c9824a 55%, var(--surface)) 0%,
+        color-mix(in srgb, #7c4415 48%, var(--surface)) 100%
+      );
+  }
+
+  .tier-silver {
+    --tier-sheen: color-mix(in srgb, #ffffff 92%, transparent);
+    border-color: color-mix(in srgb, #6b7075 65%, transparent);
+    background:
+      radial-gradient(140% 160% at 10% -20%, color-mix(in srgb, #eef1f3 65%, transparent), transparent 55%),
+      linear-gradient(
+        150deg,
+        color-mix(in srgb, #c3c8cc 55%, var(--surface)) 0%,
+        color-mix(in srgb, #6b7075 42%, var(--surface)) 100%
+      );
+  }
+
+  .tier-gold {
+    --tier-sheen: color-mix(in srgb, #fff8dd 90%, transparent);
+    border-color: color-mix(in srgb, #8a6a1a 70%, transparent);
+    background:
+      radial-gradient(140% 160% at 10% -20%, color-mix(in srgb, #f3da8f 60%, transparent), transparent 55%),
+      linear-gradient(
+        150deg,
+        color-mix(in srgb, #d9b54a 55%, var(--surface)) 0%,
+        color-mix(in srgb, #8a6a1a 48%, var(--surface)) 100%
+      );
+  }
+
   /* Кому анимации мешают физически — тем их не показываем */
   @media (prefers-reduced-motion: reduce) {
     *,

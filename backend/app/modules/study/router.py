@@ -49,14 +49,17 @@ def due_cards(
 @router.get("/new", response_model=list[schemas.StudyItem])
 def new_cards(
     language: Language,
-    limit: int = Query(default=20, ge=1, le=50),
+    limit: int | None = Query(default=None, ge=1, le=50),
     deck_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[schemas.StudyItem]:
     if deck_id is not None:
         _check_deck_ownership(db, current_user.id, deck_id)
-    return service.get_new_cards(db, current_user.id, language, limit, deck_id)
+    # Без явного limit — берём дневной лимит новых слов из настроек
+    # пользователя, а не захардкоженное число.
+    effective_limit = limit if limit is not None else current_user.new_cards_daily_limit
+    return service.get_new_cards(db, current_user.id, language, effective_limit, deck_id)
 
 
 def _check_deck_ownership(db: Session, user_id: int, deck_id: int) -> None:

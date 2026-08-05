@@ -28,6 +28,17 @@ def list_decks(
 ) -> list[Deck]:
     return service.list_decks(db, current_user.id, language, limit, offset)
 
+@router.get("/collection", response_model=list[schemas.CollectionEntry])
+def get_collection(
+    language: Language | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[schemas.CollectionEntry]:
+    # Путь должен идти ДО /{deck_id}: иначе "collection" пытался бы
+    # распарситься как int-параметр deck_id и падал 422.
+    return service.get_collection(db, current_user.id, language)
+
+
 @router.get("/{deck_id}", response_model=schemas.DeckRead)
 def get_deck(
     deck_id: int,

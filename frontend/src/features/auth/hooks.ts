@@ -7,9 +7,11 @@ import {
   login,
   logout,
   register,
+  updateSettings,
   type LoginPayload,
   type RegisterPayload,
   type User,
+  type UserSettingsUpdate,
 } from './api'
 
 // Единый ключ для «текущий пользователь» — по нему весь интерфейс узнаёт,
@@ -45,6 +47,17 @@ export function useRegister() {
   return useMutation({
     mutationFn: (payload: RegisterPayload) => register(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY }),
+  })
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: UserSettingsUpdate) => updateSettings(payload),
+    // Ответ уже содержит актуального пользователя — синхронно кладём его в
+    // кеш вместо invalidateQueries, чтобы UI не мигал старыми значениями
+    // до следующего фетча.
+    onSuccess: (user) => queryClient.setQueryData<User | null>(ME_QUERY_KEY, user),
   })
 }
 

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.modules.decks.enums import LANGUAGE_LEVELS, DeckSource, Language, Level
+from app.modules.decks.enums import LANGUAGE_LEVELS, DeckSource, DeckTier, Language, Level
 
 class DeckCreate(BaseModel):
     topic: str = Field(min_length=1, max_length=255)
@@ -31,4 +31,13 @@ class DeckRead(BaseModel):
     # Не колонка в БД — служба вычисляет одним запросом и прикрепляет
     # к ORM-объекту (deck.card_count = ...) перед возвратом.
     card_count: int
+
+
+class CollectionEntry(BaseModel):
+    """Одна карточка коллекции — колода вместе с её тиром."""
+    model_config = ConfigDict(from_attributes=True)
+
+    deck: DeckRead
+    tier: DeckTier
+    avg_ease_factor: float
 

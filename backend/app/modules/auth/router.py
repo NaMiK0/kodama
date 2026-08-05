@@ -64,6 +64,15 @@ def read_me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+@router.patch("/me/settings", response_model=schemas.UserRead)
+def update_settings(
+    data: schemas.UserSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> User:
+    return service.update_settings(db, current_user, data)
+
+
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
 def forgot_password(
     data: schemas.ForgotPasswordRequest,

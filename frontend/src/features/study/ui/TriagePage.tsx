@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/Button'
 import { TextField } from '@/shared/ui/TextField'
 
 import { fetchUnseenCards } from '../api'
-import { NEW_CARDS_LIMIT, useCheckAnswer, useMarkKnown, useSubmitReview } from '../hooks'
+import { useCheckAnswer, useMarkKnown, useNewCardsLimit, useSubmitReview } from '../hooks'
 import { SWIPE_THRESHOLD, SwipeCard, type SwipeCardHandle } from './SwipeCard'
 
 type Phase = 'loading' | 'empty' | 'triage' | 'learning' | 'summary'
@@ -67,6 +67,7 @@ export function TriagePage() {
 
   const checkAnswer = useCheckAnswer()
   const submitReview = useSubmitReview()
+  const newCardsLimit = useNewCardsLimit()
 
   useEffect(() => {
     let cancelled = false
@@ -108,7 +109,7 @@ export function TriagePage() {
 
   function startLearningOrSummary() {
     const unknown = unknownRef.current
-    const toLearn = unknown.slice(0, NEW_CARDS_LIMIT)
+    const toLearn = unknown.slice(0, newCardsLimit)
     deferredCountRef.current = unknown.length - toLearn.length
 
     if (toLearn.length === 0) {
@@ -198,12 +199,12 @@ export function TriagePage() {
   const backTo = `/decks/${id}`
 
   if (phase === 'loading' || !deck) {
-    return <div className="mx-auto max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
+    return <div className="mx-auto w-full max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
   }
 
   if (phase === 'empty') {
     return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
+      <div className="mx-auto w-full max-w-md px-6 py-16 text-center">
         <p className="mb-4 text-ink-muted">В этой колоде нечего разбирать — всё уже видели</p>
         <Button variant="secondary" onClick={() => navigate(backTo)}>
           ← К колоде
@@ -216,7 +217,7 @@ export function TriagePage() {
     const learnedNow = graduatedCount
     const deferred = deferredCountRef.current
     return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
+      <div className="mx-auto w-full max-w-md px-6 py-16 text-center">
         <p className="mb-2 text-2xl font-medium text-ink">Готово</p>
         <p className="mb-1 text-ink-muted">Разобрано: {queue.length}</p>
         <p className="mb-1 text-ink-muted">Знакомых слов: {knownCount}</p>
@@ -236,12 +237,12 @@ export function TriagePage() {
 
   if (phase === 'learning') {
     if (!activeEntry) {
-      return <div className="mx-auto max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
+      return <div className="mx-auto w-full max-w-md px-6 py-16 text-center text-ink-muted">Загрузка…</div>
     }
     const { card } = activeEntry
 
     return (
-      <div className="mx-auto max-w-md px-6 py-16">
+      <div className="mx-auto w-full max-w-md px-6 py-16">
         <p className="mb-6 text-center text-sm text-ink-muted">
           {/* +1 только пока вопрос ещё не отвечен: после submit неудачная/
               неполная попытка уже дописана в конец learningQueue, и считать

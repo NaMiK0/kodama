@@ -80,6 +80,17 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
     user.reset_token_expires_at = None
     db.commit()
 
+def update_settings(db: Session, user: User, data: schemas.UserSettingsUpdate) -> User:
+    if data.offer_pronunciation is not None:
+        user.offer_pronunciation = data.offer_pronunciation
+    if data.new_cards_daily_limit is not None:
+        user.new_cards_daily_limit = data.new_cards_daily_limit
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def authenticate_google_user(db: Session, email: str, google_id: str) -> User:
     """Находит пользователя по google_id, либо связывает существующий
     аккаунт с тем же email, либо создаёт нового (без пароля)."""

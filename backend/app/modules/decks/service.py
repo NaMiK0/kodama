@@ -1,10 +1,28 @@
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.modules.cards.models import Card
 from app.modules.decks import schemas
-from app.modules.decks.enums import LANGUAGE_LEVELS, Language
+from app.modules.decks.enums import LANGUAGE_LEVELS, DeckTier, Language
 from app.modules.decks.models import Deck
+from app.modules.study.enums import AnswerDirection
+from app.modules.study.models import UserCardProgress
+
+# Пороги среднего ease_factor SM-2 для тира коллекции (см. DeckTier).
+# INITIAL_EASE_FACTOR = 2.5: ниже него колода в среднем спотыкалась
+# (ease_factor падает при quality < 3), выше — уверенно отвечали верно.
+# Откалиброваны на глаз, как FUZZY-порог в answers.py — донастроить по
+# реальным данным, когда наберётся история использования.
+_SILVER_EASE_THRESHOLD = 2.3
+_GOLD_EASE_THRESHOLD = 2.6
+
+
+def _tier_for_ease(avg_ease: float) -> DeckTier:
+    if avg_ease >= _GOLD_EASE_THRESHOLD:
+        return DeckTier.GOLD
+    if avg_ease >= _SILVER_EASE_THRESHOLD:
+        return DeckTier.SILVER
+    return DeckTier.BRONZE
 
 class DeckNotFoundError(Exception):
     """Колода не найдена или принадлежит другому пользователю."""
@@ -87,6 +105,54 @@ def update_deck(db: Session, user_id: int, deck_id: int, data: schemas.DeckUpdat
     db.refresh(deck)
     deck.card_count = len(deck.cards)
     return deck
+
+def get_collection(
+    db: Session, user_id: int, language: Language | None = None
+) -> list[schemas.CollectionEntry]:
+    """Коллекция полностью разобранных колод с их тиром (см. DeckTier).
+
+    «Разобрана» — у каждой карточки колоды есть прогресс на to_russian (этой
+    стороной любое слово входит в оборот, см. get_new_cards). Тир считаем по
+    среднему ease_factor ПО ОБЕИМ сторонам сразу — так воспроизведение,
+    открывшееся позже, тоже участвует в оценке, а не только узнавание.
+    """
+    # to_russian считаем через DISTINCT card_id внутри CASE: COUNT(DISTINCT
+    # NULL) их игнорирует, поэтому строки с другим направлением не мешают.
+    covered_case = case((UserCardProgress.direction == AnswerDirection.TO_RUSSIAN, Card.id))
+    stmt = (
+        select(
+            Deck,
+            func.count(func.distinct(Card.id)).label("total_cards"),
+            func.count(func.distinct(covered_case)).label("covered_cards"),
+            func.avg(UserCardProgress.ease_factor).label("avg_ease"),
+        )
+        .join(Card, Card.deck_id == Deck.id)
+        .outerjoin(
+            UserCardProgress,
+            (UserCardProgress.card_id == Card.id) & (UserCardProgress.user_id == user_id),
+        )
+        .where(Deck.user_id == user_id)
+        .group_by(Deck.id)
+    )
+    if language is not None:
+        stmt = stmt.where(Deck.language == language)
+
+    entries: list[schemas.CollectionEntry] = []
+    for deck, total_cards, covered_cards, avg_ease in db.execute(stmt).all():
+        # Пустая колода (0 карточек) формально «разобрана» пустым множеством,
+        # но показывать её в коллекции бессмысленно — пропускаем.
+        if total_cards == 0 or covered_cards != total_cards or avg_ease is None:
+            continue
+        deck.card_count = total_cards
+        entries.append(
+            schemas.CollectionEntry(
+                deck=schemas.DeckRead.model_validate(deck),
+                tier=_tier_for_ease(avg_ease),
+                avg_ease_factor=avg_ease,
+            )
+        )
+    return entries
+
 
 def delete_deck(db: Session, user_id: int, deck_id: int) -> None:
     deck = get_deck(db, user_id, deck_id)
