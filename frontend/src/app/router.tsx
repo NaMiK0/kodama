@@ -14,6 +14,7 @@ import { TriagePage } from '@/features/study/ui/TriagePage'
 import { TokensPreview } from '@/shared/ui/TokensPreview'
 
 import { AppShell } from './AppShell'
+import { ComingSoonPage } from './ComingSoonPage'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -57,6 +58,9 @@ export function AppRouter() {
           <Route path="/decks/:deckId/triage" element={<TriagePage />} />
           <Route path="/study" element={<StudySessionPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          {/* Разделы сайдбара, которые ещё не начаты — известная секция или
+              нет, решает ComingSoonPage сама (см. isComingSoonSection). */}
+          <Route path="/soon/:section" element={<ComingSoonPage />} />
         </Route>
       </Route>
 

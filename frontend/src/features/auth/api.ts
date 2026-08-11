@@ -1,4 +1,5 @@
 import { apiFetch, apiUrl } from '@/shared/api/client'
+import type { AvatarId } from '@/shared/ui/avatarRegistry'
 
 export type User = {
   id: number
@@ -6,6 +7,7 @@ export type User = {
   created_at: string
   offer_pronunciation: boolean
   new_cards_daily_limit: number
+  avatar_id: AvatarId
 }
 
 export type LoginPayload = { email: string; password: string }
@@ -13,6 +15,7 @@ export type RegisterPayload = { email: string; password: string }
 export type UserSettingsUpdate = {
   offer_pronunciation?: boolean
   new_cards_daily_limit?: number
+  avatar_id?: AvatarId
 }
 
 export function fetchMe(): Promise<User> {

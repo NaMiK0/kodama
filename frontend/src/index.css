@@ -248,6 +248,36 @@
       );
   }
 
+  /* Страница «в разработке»: ветка прорисовывается один раз при загрузке —
+     единственная анимация на странице, всё остальное статично.
+     pathLength=1 на самом <path> — обводка любой формы нормализуется к
+     единице, поэтому dasharray/dashoffset не надо подгонять под геометрию.
+     forwards держит конечное состояние (offset 0 = ветка целиком нарисована)
+     даже когда prefers-reduced-motion сжимает анимацию почти до нуля секунд —
+     ветка всё равно долистает до целой, а не замрёт невидимой на старте. */
+  @keyframes kodama-branch-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .branch-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: kodama-branch-draw 1.1s ease-out forwards;
+  }
+
+  @keyframes kodama-branch-bud {
+    to {
+      opacity: 1;
+    }
+  }
+
+  .branch-bud {
+    opacity: 0;
+    animation: kodama-branch-bud 0.4s ease-out 1s forwards;
+  }
+
   /* Кому анимации мешают физически — тем их не показываем */
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -264,6 +294,14 @@
     .spinner {
       animation-duration: 0.8s !important;
       animation-iteration-count: infinite !important;
+    }
+
+    /* animation-duration выше уже сжат до 0.01ms, но animation-delay это
+       правило не трогает — без обнуления здесь ветка на секунду замирала бы
+       невидимой (opacity:0 / dashoffset:1) перед мгновенным доигрыванием. */
+    .branch-draw,
+    .branch-bud {
+      animation-delay: 0s !important;
     }
   }
 }

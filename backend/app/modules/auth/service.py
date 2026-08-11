@@ -85,6 +85,8 @@ def update_settings(db: Session, user: User, data: schemas.UserSettingsUpdate) -
         user.offer_pronunciation = data.offer_pronunciation
     if data.new_cards_daily_limit is not None:
         user.new_cards_daily_limit = data.new_cards_daily_limit
+    if data.avatar_id is not None:
+        user.avatar_id = data.avatar_id
 
     db.commit()
     db.refresh(user)

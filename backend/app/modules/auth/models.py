@@ -1,14 +1,24 @@
 from datetime import datetime
+from enum import StrEnum
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.modules.auth.enums import AvatarId
 
 if TYPE_CHECKING:
     from app.modules.decks.models import Deck
+
+
+def _str_enum(enum_cls: type[StrEnum]) -> Enum:
+    return Enum(
+        enum_cls,
+        native_enum=False,
+        values_callable=lambda e: [m.value for m in e]
+    )
 
 
 class User(Base):
@@ -39,6 +49,9 @@ class User(Base):
     )
     new_cards_daily_limit: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default="20"
+    )
+    avatar_id: Mapped[AvatarId] = mapped_column(
+        _str_enum(AvatarId), nullable=False, server_default="sprout"
     )
 
     decks: Mapped[list["Deck"]] = relationship(

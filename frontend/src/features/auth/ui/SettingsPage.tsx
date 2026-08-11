@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useMe, useUpdateSettings } from '@/features/auth/hooks'
+import { Avatar } from '@/shared/ui/Avatar'
+import { AVATARS, AVATAR_IDS } from '@/shared/ui/avatarRegistry'
 import { Button } from '@/shared/ui/Button'
 import { Toggle } from '@/shared/ui/Toggle'
 
@@ -43,6 +45,33 @@ export function SettingsPage() {
         ← Назад
       </Button>
       <h1 className="mb-6 text-xl font-medium text-ink">Настройки</h1>
+
+      <div className="mb-6 rounded-xl border border-line bg-surface p-5">
+        <p className="font-medium text-ink">Аватар</p>
+        <p className="mb-4 text-sm text-ink-muted">Как вас видят в шапке приложения</p>
+        <div role="radiogroup" aria-label="Аватар" className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {AVATAR_IDS.map((id) => {
+            const selected = user.avatar_id === id
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={AVATARS[id].label}
+                title={AVATARS[id].label}
+                disabled={updateSettings.isPending}
+                onClick={() => updateSettings.mutate({ avatar_id: id })}
+                className={`flex flex-col items-center gap-1 rounded-xl border p-2 outline-none transition-colors duration-150 focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  selected ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-surface-soft'
+                }`}
+              >
+                <Avatar id={id} size="lg" />
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       <div className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface">
         <div className="flex items-center justify-between gap-4 p-5">
