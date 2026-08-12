@@ -13,9 +13,26 @@ const LANGUAGES: { value: StudyLanguage; label: string }[] = [
 ]
 
 const SIDEBAR_STORAGE_KEY = 'kodama:sidebar'
-// Совпадает с брейкпоинтом `md` в Tailwind — ниже него рельс уступает место
-// мобильной шторке (см. Sidebar).
-const MOBILE_BREAKPOINT = 768
+// Брейкпоинт `lg` в Tailwind (совпадает с классами md:.../lg:... в Sidebar —
+// см. там же). Раньше был `md` (768) — ровно на этой ширине (типичный
+// планшет-портрет) постоянный рельс уже не помещался: заголовки страниц
+// наезжали на кнопки, потому что рельсу доставалась четверть и без того
+// узкого экрана. 1024 — граница, где постоянный рельс ещё уместен.
+const MOBILE_BREAKPOINT = 1024
+
+function useIsMobile(breakpoint: number): boolean {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint)
+
+  useEffect(() => {
+    const query = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
+    const handleChange = () => setIsMobile(query.matches)
+    handleChange()
+    query.addEventListener('change', handleChange)
+    return () => query.removeEventListener('change', handleChange)
+  }, [breakpoint])
+
+  return isMobile
+}
 
 function getStoredCollapsed(): boolean {
   return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'collapsed'
@@ -71,6 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // шторка — временное, по умолчанию закрыта, ничего не сохраняем.
   const [collapsed, setCollapsed] = useState(getStoredCollapsed)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const isMobile = useIsMobile(MOBILE_BREAKPOINT)
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? 'collapsed' : 'expanded')
@@ -80,12 +98,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Один бургер, два разных действия: на десктопе рельс — часть layout'а
     // (сворачивает/разворачивает ширину), на мобильном — независимая шторка
     // поверх контента. Разница только в том, что происходит в потоке.
-    if (window.innerWidth < MOBILE_BREAKPOINT) {
+    if (isMobile) {
       setMobileOpen((value) => !value)
     } else {
       setCollapsed((value) => !value)
     }
   }
+
+  // Подпись кнопки должна называть РЕАЛЬНОЕ действие: на мобильном это
+  // открытие/закрытие шторки, а не сворачивание рельса — раньше кнопка
+  // всегда говорила "Свернуть/Развернуть меню" даже на телефоне.
+  const burgerLabel = isMobile
+    ? mobileOpen
+      ? 'Закрыть меню'
+      : 'Открыть меню'
+    : collapsed
+      ? 'Развернуть меню'
+      : 'Свернуть меню'
 
   return (
     // WS нужен только авторизованному контуру — соединение живёт здесь,
@@ -97,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={handleBurgerClick}
-              aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+              aria-label={burgerLabel}
               title="Меню"
               className="inline-flex size-9 items-center justify-center rounded-lg text-ink-subtle outline-none transition-colors duration-150 hover:bg-surface-soft hover:text-ink focus-visible:ring-4 focus-visible:ring-accent/25"
             >

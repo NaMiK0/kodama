@@ -52,14 +52,17 @@ export function DeckDetailPage() {
         ← Мои колоды
       </Link>
 
-      <div className="mb-6 flex items-center justify-between">
+      {/* flex-wrap: три кнопки + заголовок не помещаются в одну строку на
+          узком экране — без wrap кнопки наезжали на заголовок вместо
+          переноса под него. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-medium text-ink">{deck.topic}</h1>
           <span className="text-sm text-ink-muted">
             {deck.language.toUpperCase()} · {deck.level}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="danger-soft" onClick={() => setDeckDeleteOpen(true)}>
             Удалить колоду
           </Button>

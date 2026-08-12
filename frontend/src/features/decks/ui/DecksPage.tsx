@@ -39,9 +39,12 @@ export function DecksPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
-      <div className="mb-6 flex items-center justify-between">
+      {/* flex-wrap: на узком экране заголовок и кнопки не помещаются в одну
+          строку — без wrap кнопки просто наезжали на заголовок вместо того,
+          чтобы перенестись под него. */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-medium text-ink">Мои колоды</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="ai"
             disabled={!canGenerate}

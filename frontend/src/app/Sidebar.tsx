@@ -93,8 +93,10 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
 
   return (
     <>
+      {/* lg, не md: на md (768, típичный планшет-портрет) постоянному рельсу
+          уже не хватает места — см. MOBILE_BREAKPOINT в AppShell.tsx. */}
       <aside
-        className={`hidden shrink-0 overflow-hidden border-r border-line bg-canvas transition-[width] duration-200 ease-out md:flex md:flex-col ${
+        className={`hidden shrink-0 overflow-hidden border-r border-line bg-canvas transition-[width] duration-200 ease-out lg:flex lg:flex-col ${
           collapsed ? 'w-16' : 'w-60'
         }`}
       >
@@ -102,17 +104,21 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
       </aside>
 
       {/* Мобильная шторка: держим смонтированной всегда (как Modal), inert
-          и pointer-events отключают её, пока закрыта, вместо условного рендера. */}
+          и pointer-events отключают её, пока закрыта, вместо условного рендера.
+          Подложка темнее, чем обычно (70%, не 50) и не завязана на surface —
+          на тёмной теме canvas и без того почти чёрный, и bg-black/50 на нём
+          сливался в ничто; чистый чёрный поверх тёмного canvas всё равно даёт
+          заметный перепад, потому что абсолютная яркость и так низкая. */}
       <div
         aria-hidden
         onClick={onCloseMobile}
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 md:hidden ${
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 lg:hidden dark:bg-black/70 ${
           mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       />
       <aside
         inert={!mobileOpen}
-        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-line bg-surface shadow-card transition-transform duration-200 ease-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-line bg-surface shadow-card transition-transform duration-200 ease-out lg:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
