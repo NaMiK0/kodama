@@ -69,6 +69,15 @@ def _check_deck_ownership(db: Session, user_id: int, deck_id: int) -> None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Колода не найдена")
 
 
+@router.get("/stats", response_model=schemas.StudyStats)
+def study_stats(
+    language: Language,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> schemas.StudyStats:
+    return service.get_study_stats(db, current_user.id, language)
+
+
 @router.get("/unseen", response_model=list[CardRead])
 def unseen_cards(
     deck_id: int,

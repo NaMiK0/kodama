@@ -79,3 +79,30 @@ export function fetchUnseenCards(deckId: number): Promise<Card[]> {
 export function markKnown(cardId: number): Promise<void> {
   return apiFetch('/study/mark-known', { method: 'POST', json: { card_id: cardId } })
 }
+
+export type HardestCard = {
+  card_id: number
+  word: string
+  translation: string
+  direction: AnswerDirection
+  ease_factor: number
+}
+
+export type UpcomingDay = {
+  date: string
+  count: number
+}
+
+export type StudyStats = {
+  in_progress: number
+  learning: number
+  young: number
+  mature: number
+  hardest: HardestCard[]
+  // Ровно 14 дней подряд от сегодня, дни без нагрузки приходят с count: 0.
+  upcoming: UpcomingDay[]
+}
+
+export function fetchStudyStats(language: StudyLanguage): Promise<StudyStats> {
+  return apiFetch<StudyStats>(`/study/stats?language=${language}`)
+}

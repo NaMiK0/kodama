@@ -57,3 +57,31 @@ class AnswerCheckResult(BaseModel):
 
 class MarkKnownRequest(BaseModel):
     card_id: int
+
+
+class HardCard(BaseModel):
+    """Слово, которое даётся хуже всего — низкий ease_factor SM-2."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    card_id: int
+    word: str
+    translation: str
+    direction: AnswerDirection
+    ease_factor: float
+
+
+class UpcomingDay(BaseModel):
+    """Сколько карточек подойдёт к повторению в конкретный день."""
+
+    date: date
+    count: int
+
+
+class StudyStats(BaseModel):
+    in_progress: int  # всего строк расписания (карточка + направление)
+    learning: int      # repetitions == 0
+    young: int          # repetitions >= 1, interval < MATURE_INTERVAL_DAYS
+    mature: int          # interval >= MATURE_INTERVAL_DAYS
+    hardest: list[HardCard]
+    upcoming: list[UpcomingDay]

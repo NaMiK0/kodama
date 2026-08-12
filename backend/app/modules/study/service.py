@@ -1,13 +1,18 @@
 from datetime import date, timedelta
 import json
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.modules.cards.models import Card
 from app.modules.decks.models import Deck
 from app.modules.study.models import UserCardProgress
-from app.modules.study.sm2 import INITIAL_EASE_FACTOR, SELF_ASSESSED_KNOWN_INTERVAL, sm2
+from app.modules.study.sm2 import (
+    INITIAL_EASE_FACTOR,
+    MATURE_INTERVAL_DAYS,
+    SELF_ASSESSED_KNOWN_INTERVAL,
+    sm2,
+)
 from app.modules.cards.schemas import CardRead
 from app.core.redis import get_redis
 from app.modules.ai.provider import LLMProvider
@@ -294,6 +299,97 @@ def mark_known(db: Session, user_id: int, card_id: int) -> None:
     )
     db.add(progress)
     db.commit()
+
+
+_HARDEST_LIMIT = 10
+_UPCOMING_DAYS = 14
+
+
+def get_study_stats(db: Session, user_id: int, language: Language) -> schemas.StudyStats:
+    """Статистика по расписанию пользователя для колод указанного языка.
+
+    Кэш намеренно не используется: данные меняются после каждого review,
+    инвалидация ключа стоила бы дороже, чем один агрегатный запрос.
+    """
+    base_filter = (
+        UserCardProgress.user_id == user_id,
+        Deck.language == language,
+    )
+
+    # Три взаимоисключающих ведра одним запросом — считаем в БД, а не в
+    # Python, чтобы не тащить все строки расписания на бэкенд.
+    counts_row = db.execute(
+        select(
+            func.count().label("in_progress"),
+            func.count().filter(UserCardProgress.repetitions == 0).label("learning"),
+            func.count()
+            .filter(
+                UserCardProgress.repetitions >= 1,
+                UserCardProgress.interval < MATURE_INTERVAL_DAYS,
+            )
+            .label("young"),
+            func.count()
+            .filter(UserCardProgress.interval >= MATURE_INTERVAL_DAYS)
+            .label("mature"),
+        )
+        .join(Card, Card.id == UserCardProgress.card_id)
+        .join(Deck, Deck.id == Card.deck_id)
+        .where(*base_filter)
+    ).one()
+
+    # ease_factor нетронутой карточки равен дефолтному INITIAL_EASE_FACTOR —
+    # без фильтра repetitions >= 1 в "тяжёлые" попали бы слова, которые ещё
+    # ни разу не спрашивали, а не те, что реально даются сложно.
+    hardest_rows = db.execute(
+        select(Card.id, Card.word, Card.translation, UserCardProgress.direction, UserCardProgress.ease_factor)
+        .select_from(UserCardProgress)
+        .join(Card, Card.id == UserCardProgress.card_id)
+        .join(Deck, Deck.id == Card.deck_id)
+        .where(*base_filter, UserCardProgress.repetitions >= 1)
+        .order_by(UserCardProgress.ease_factor.asc())
+        .limit(_HARDEST_LIMIT)
+    ).all()
+    hardest = [
+        schemas.HardCard(
+            card_id=row.id,
+            word=row.word,
+            translation=row.translation,
+            direction=row.direction,
+            ease_factor=row.ease_factor,
+        )
+        for row in hardest_rows
+    ]
+
+    today = date.today()
+    # Просроченное (next_review_date < today) считаем "на сегодня" — его и
+    # правда пора повторить прямо сейчас; GREATEST сдвигает такие строки
+    # в сегодняшний бакет прямо в SQL, без выгрузки всех строк в Python.
+    bucket_date = func.greatest(UserCardProgress.next_review_date, today)
+    upcoming_rows = db.execute(
+        select(bucket_date.label("day"), func.count().label("count"))
+        .select_from(UserCardProgress)
+        .join(Card, Card.id == UserCardProgress.card_id)
+        .join(Deck, Deck.id == Card.deck_id)
+        .where(*base_filter, bucket_date < today + timedelta(days=_UPCOMING_DAYS))
+        .group_by(bucket_date)
+    ).all()
+    counts_by_day = {row.day: row.count for row in upcoming_rows}
+
+    # Ровно 14 дней подряд без пропусков — дни без повторений идут с count=0,
+    # иначе график интервалов покажет ложную непрерывность.
+    upcoming = [
+        schemas.UpcomingDay(date=today + timedelta(days=offset), count=counts_by_day.get(today + timedelta(days=offset), 0))
+        for offset in range(_UPCOMING_DAYS)
+    ]
+
+    return schemas.StudyStats(
+        in_progress=counts_row.in_progress,
+        learning=counts_row.learning,
+        young=counts_row.young,
+        mature=counts_row.mature,
+        hardest=hardest,
+        upcoming=upcoming,
+    )
 
 
 _ANSWER_CACHE_TTL = 604800  # 7 дней

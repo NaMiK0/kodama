@@ -7,6 +7,7 @@ import {
   checkAnswer,
   fetchDueCards,
   fetchNewCards,
+  fetchStudyStats,
   markKnown,
   submitReview,
   type ReviewPayload,
@@ -30,6 +31,10 @@ export function studyNewKey(language: StudyLanguage, deckId?: number) {
   return [...STUDY_QUERY_KEY, 'new', language, deckId] as const
 }
 
+export function studyStatsKey(language: StudyLanguage) {
+  return [...STUDY_QUERY_KEY, 'stats', language] as const
+}
+
 // Для бейджа на входе: "N карточек на сегодня" должно совпадать с тем, что
 // реально войдёт в сессию (due + до лимита новых из настроек) — иначе кнопка
 // обещает одно число, а сессия покажет другое. deckId — тот же бейдж, но
@@ -46,6 +51,13 @@ export function useNewCards(language: StudyLanguage, deckId?: number) {
   return useQuery({
     queryKey: studyNewKey(language, deckId),
     queryFn: () => fetchNewCards(language, limit, deckId),
+  })
+}
+
+export function useStudyStats(language: StudyLanguage) {
+  return useQuery({
+    queryKey: studyStatsKey(language),
+    queryFn: () => fetchStudyStats(language),
   })
 }
 
