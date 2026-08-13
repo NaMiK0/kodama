@@ -1,4 +1,5 @@
 import { useLanguage } from '@/shared/lib/LanguageProvider'
+import { Logomark } from '@/shared/ui/Logomark'
 
 import { useCollection } from '../hooks'
 import { TierDeckCard } from './TierDeckCard'
@@ -27,7 +28,7 @@ export function CollectionPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line py-16 text-center">
-          <p className="font-jp text-3xl text-ink-subtle select-none">木霊</p>
+          <Logomark className="size-14" />
           <p className="text-ink-muted">
             Пока нет ни одной полностью разобранной колоды по {LANGUAGE_NAMES[language]}
           </p>

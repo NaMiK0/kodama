@@ -6,6 +6,7 @@ import { GeneratingDeckCard } from '@/features/ai/ui/GeneratingDeckCard'
 import { StudyEntry } from '@/features/study/ui/StudyEntry'
 import { useLanguage } from '@/shared/lib/LanguageProvider'
 import { Button } from '@/shared/ui/Button'
+import { Logomark } from '@/shared/ui/Logomark'
 
 import { useDecks } from '../hooks'
 import { CreateDeckModal } from './CreateDeckModal'
@@ -98,7 +99,7 @@ export function DecksPage() {
         </>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line py-16 text-center">
-          <p className="font-jp text-3xl text-ink-subtle select-none">木霊</p>
+          <Logomark className="size-14" />
           {/* Уточняем язык: список отфильтрован, и без этого «колод пока нет»
               сбивало бы с толку того, у кого есть колоды на другом языке. */}
           <p className="text-ink-muted">Колод по {LANGUAGE_NAMES[language]} пока нет</p>

@@ -1,3 +1,5 @@
+import { Logomark } from '@/shared/ui/Logomark'
+
 import { EchoRipples } from './EchoRipples'
 
 /**
@@ -9,15 +11,13 @@ export function ForestPanel() {
     <aside className="relative hidden overflow-hidden bg-forest lg:flex lg:flex-col lg:justify-between lg:p-12">
       <EchoRipples />
 
-      <p className="relative text-sm tracking-widest text-forest-ink/60 uppercase">Kodama</p>
+      <div className="relative flex items-center gap-2 text-forest-ink/60">
+        <Logomark className="size-5" />
+        <p className="text-sm tracking-widest uppercase">Kodama</p>
+      </div>
 
       <div className="relative flex flex-1 items-center justify-center">
-        <p
-          className="font-jp text-forest-ink/90 select-none"
-          style={{ writingMode: 'vertical-rl', fontSize: '5.5rem', letterSpacing: '0.15em' }}
-        >
-          木霊
-        </p>
+        <Logomark className="size-64" />
       </div>
 
       <div className="relative max-w-xs">

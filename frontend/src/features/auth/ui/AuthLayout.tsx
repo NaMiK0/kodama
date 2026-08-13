@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { Logomark } from '@/shared/ui/Logomark'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 
 import { EchoRipples } from './EchoRipples'
@@ -28,9 +29,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <ThemeToggle className="absolute top-4 right-4 z-10 text-forest-ink/60 hover:text-forest-ink lg:text-ink-subtle lg:hover:text-ink" />
 
       <main className="relative flex min-h-dvh flex-col items-center justify-center gap-10 px-6 py-12 lg:min-h-0 lg:gap-0">
-        <header className="text-center lg:hidden">
-          <p className="font-jp text-5xl text-forest-ink/90 select-none">木霊</p>
-          <p className="mt-3 text-xs tracking-[0.3em] text-forest-ink/50 uppercase">Kodama</p>
+        <header className="flex flex-col items-center gap-3 text-center lg:hidden">
+          <Logomark className="size-20" />
+          <p className="text-xs tracking-[0.3em] text-forest-ink/50 uppercase">Kodama</p>
         </header>
 
         <div className="w-full max-w-sm">{children}</div>

@@ -1,6 +1,7 @@
 import type { HardestCard, StudyStats } from '@/features/study/api'
 import { useStudyStats } from '@/features/study/hooks'
 import { useLanguage } from '@/shared/lib/LanguageProvider'
+import { Logomark } from '@/shared/ui/Logomark'
 
 import { UpcomingLoadChart } from './UpcomingLoadChart'
 
@@ -114,7 +115,7 @@ export function StatsPage() {
         <p className="text-ink-muted">Загрузка…</p>
       ) : !stats || stats.in_progress === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line py-16 text-center">
-          <p className="font-jp text-3xl text-ink-subtle select-none">木霊</p>
+          <Logomark className="size-14" />
           <p className="text-ink-muted">
             По {LANGUAGE_NAMES[language]} пока нечего показывать — начните учить слова, и здесь
             появится картина прогресса

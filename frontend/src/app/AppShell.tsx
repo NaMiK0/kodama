@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 
 import { useLanguage, type StudyLanguage } from '@/shared/lib/LanguageProvider'
 import { ServerEventsProvider } from '@/shared/lib/ServerEventsProvider'
+import { Logomark } from '@/shared/ui/Logomark'
 
 import { AccountMenu } from './AccountMenu'
 import { Sidebar } from './Sidebar'
@@ -132,8 +133,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <BurgerIcon />
             </button>
-            <Link to="/" className="font-jp text-xl text-ink select-none">
-              木霊
+            <Link to="/" className="flex items-center text-ink select-none" aria-label="Kodama">
+              <Logomark className="size-9" />
             </Link>
           </div>
 
