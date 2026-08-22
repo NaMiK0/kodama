@@ -11,6 +11,7 @@ export type Deck = {
   source: DeckSource
   created_at: string
   card_count: number
+  folder_id: number | null
 }
 
 export type DeckCreatePayload = {
@@ -18,6 +19,15 @@ export type DeckCreatePayload = {
   language: StudyLanguage
   level: string
 }
+
+// Всё опционально: используется и для переименования полей колоды, и —
+// в первую очередь для Библиотеки — для одного лишь переноса folder_id,
+// без прикосновения к остальным полям.
+export type DeckUpdatePayload = Partial<{
+  topic: string
+  level: string
+  folder_id: number | null
+}>
 
 // Совпадает с LANGUAGE_LEVELS на бэкенде (app/modules/decks/enums.py) —
 // используется и для валидации на клиенте, и для построения выпадающего списка.
@@ -49,6 +59,17 @@ export function fetchDecks(language: StudyLanguage, limit?: number): Promise<Dec
   return apiFetch<Deck[]>(`/decks?${query}`)
 }
 
+// Для Библиотеки: 'none' — только колоды без папки (корень), число — колоды
+// внутри конкретной папки. Отдельная функция, а не расширение fetchDecks —
+// та обслуживает DecksPage с постраничной подгрузкой (limit), эта — срез по
+// ровно одному уровню дерева папок, без пагинации.
+export function fetchDecksInFolder(
+  language: StudyLanguage,
+  folderId: number | 'none',
+): Promise<Deck[]> {
+  return apiFetch<Deck[]>(`/decks?language=${language}&folder_id=${folderId}`)
+}
+
 export function fetchCollection(language: StudyLanguage): Promise<CollectionEntry[]> {
   return apiFetch<CollectionEntry[]>(`/decks/collection?language=${language}`)
 }
@@ -63,4 +84,8 @@ export function createDeck(payload: DeckCreatePayload): Promise<Deck> {
 
 export function deleteDeck(id: number): Promise<void> {
   return apiFetch(`/decks/${id}`, { method: 'DELETE' })
+}
+
+export function updateDeck(id: number, payload: DeckUpdatePayload): Promise<Deck> {
+  return apiFetch<Deck>(`/decks/${id}`, { method: 'PATCH', json: payload })
 }

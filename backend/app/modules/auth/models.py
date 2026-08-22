@@ -11,6 +11,7 @@ from app.modules.auth.enums import AvatarId
 
 if TYPE_CHECKING:
     from app.modules.decks.models import Deck
+    from app.modules.library.models import Folder
 
 
 def _str_enum(enum_cls: type[StrEnum]) -> Enum:
@@ -55,6 +56,11 @@ class User(Base):
     )
 
     decks: Mapped[list["Deck"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    folders: Mapped[list["Folder"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,

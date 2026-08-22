@@ -5,6 +5,7 @@ from app.modules.cards.models import Card
 from app.modules.decks import schemas
 from app.modules.decks.enums import LANGUAGE_LEVELS, DeckTier, Language
 from app.modules.decks.models import Deck
+from app.modules.library.service import get_owned_folder_for_language
 from app.modules.study.enums import AnswerDirection
 from app.modules.study.models import UserCardProgress
 
@@ -43,12 +44,33 @@ def create_deck(db: Session, user_id: int, data: schemas.DeckCreate) -> Deck:
     deck.card_count = 0  # только что созданная колода — карточек ещё нет
     return deck
 
+class InvalidFolderFilterError(Exception):
+    """Значение параметра folder_id из GET /decks не распознано
+    (не "none" и не число)."""
+
+def parse_folder_filter(raw: str | None) -> tuple[bool, int | None]:
+    """Разбирает query-параметр folder_id из GET /decks (см. router.py) в
+    пару (filter_by_folder, folder_id):
+    raw is None            → (False, None) — параметр не передан, без фильтрации;
+    raw == "none"           → (True, None) — только корневые колоды (folder_id IS NULL);
+    raw — строка с числом   → (True, <id>) — колоды конкретной папки."""
+    if raw is None:
+        return False, None
+    if raw == "none":
+        return True, None
+    try:
+        return True, int(raw)
+    except ValueError:
+        raise InvalidFolderFilterError(raw)
+
 def list_decks(
     db: Session,
     user_id: int,
     language: Language | None = None,
     limit: int | None = None,
     offset: int = 0,
+    filter_by_folder: bool = False,
+    folder_id: int | None = None,
 ) -> list[Deck]:
     # Считаем карточки одним запросом (коррелированный подзапрос), а не
     # обращением к deck.cards в цикле — иначе на N колод вышло бы N+1 запрос.
@@ -65,6 +87,12 @@ def list_decks(
     # по обоим языкам сразу (например, будущая коллекция пройденных колод).
     if language is not None:
         stmt = stmt.where(Deck.language == language)
+
+    # filter_by_folder отличает «параметр вообще не передан» (старое
+    # поведение — без фильтрации) от «передан folder_id=none» (корневые
+    # колоды, folder_id IS NULL) — см. parse_folder_filter.
+    if filter_by_folder:
+        stmt = stmt.where(Deck.folder_id.is_(None) if folder_id is None else Deck.folder_id == folder_id)
 
     # Сортировка до limit/offset — иначе страницы поехали бы: без ORDER BY
     # порядок строк в Postgres не гарантирован между запросами.
@@ -100,6 +128,16 @@ def update_deck(db: Session, user_id: int, deck_id: int, data: schemas.DeckUpdat
         deck.topic = data.topic
     if data.level is not None:
         deck.level = data.level
+
+    # folder_id — единственное поле, где null имеет смысл (перенос в корень
+    # библиотеки), поэтому отличаем «не передано» от «явный null» через
+    # model_fields_set, а не через сравнение с None, как остальные поля выше.
+    if "folder_id" in data.model_fields_set:
+        if data.folder_id is None:
+            deck.folder_id = None
+        else:
+            folder = get_owned_folder_for_language(db, user_id, data.folder_id, deck.language)
+            deck.folder_id = folder.id
 
     db.commit()
     db.refresh(deck)

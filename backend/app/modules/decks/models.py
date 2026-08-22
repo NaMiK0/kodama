@@ -20,6 +20,7 @@ def _str_enum(enum_cls: type[StrEnum]) -> Enum:
 if TYPE_CHECKING:
     from app.modules.auth.models import User
     from app.modules.cards.models import Card
+    from app.modules.library.models import Folder
 
 class Deck(Base):
     __tablename__ = "decks"
@@ -34,6 +35,14 @@ class Deck(Base):
         _str_enum(DeckSource), default=DeckSource.USER_CREATED
     )
 
+    # ON DELETE SET NULL — колода должна пережить удаление папки: удалённая
+    # папка "поднимает" содержимое на уровень выше (см. library/service.py),
+    # а FK лишь подстраховывает целостность на случай прямого DELETE в обход
+    # сервиса.
+    folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("folders.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -42,6 +51,7 @@ class Deck(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="decks")
+    folder: Mapped["Folder | None"] = relationship(back_populates="decks")
     cards: Mapped[list["Card"]] = relationship(
         back_populates="deck",
         cascade="all, delete-orphan",

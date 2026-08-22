@@ -10,6 +10,7 @@ from app.modules.ai.notifications import consume_notifications
 
 from app.modules.auth.router import router as auth_router
 from app.modules.decks.router import router as decks_router
+from app.modules.library.router import router as library_router
 from app.modules.cards.router import router as cards_router
 from app.modules.study.router import router as study_router
 from app.modules.ai.router import router as ai_router
@@ -45,6 +46,7 @@ app.add_middleware(
 
 app.include_router(router=auth_router)
 app.include_router(router=decks_router)
+app.include_router(router=library_router)
 app.include_router(router=cards_router)
 app.include_router(router=study_router)
 app.include_router(router=ai_router)

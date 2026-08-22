@@ -14,9 +14,9 @@ import {
  * (см. `ComingSoonPage`) никогда не разъезжались.
  */
 
-export type ComingSoonSection = 'library' | 'pronunciation'
+export type ComingSoonSection = 'pronunciation'
 
-export const COMING_SOON_SECTIONS = ['library', 'pronunciation'] as const
+export const COMING_SOON_SECTIONS = ['pronunciation'] as const
 
 type ComingSoonCopy = {
   /** Название раздела — совпадает с подписью пункта в сайдбаре. */
@@ -26,10 +26,6 @@ type ComingSoonCopy = {
 }
 
 export const COMING_SOON_COPY = {
-  library: {
-    title: 'Библиотека',
-    promise: 'Здесь колоды можно будет собирать в папки — по учебнику, по курсу, по цели.',
-  },
   pronunciation: {
     title: 'Произношение',
     promise: 'Здесь произношение станет отдельным тренажёром — без карточек и перевода, только звук.',
@@ -52,17 +48,11 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { key: 'home', to: '/', label: 'Главная', Icon: HomeIcon },
   { key: 'collection', to: '/collection', label: 'Коллекция', Icon: CollectionIcon },
+  { key: 'library', to: '/library', label: 'Библиотека', Icon: LibraryIcon },
   { key: 'stats', to: '/stats', label: 'Статистика', Icon: StatsIcon },
 ]
 
 export const NAV_ITEMS_COMING_SOON: NavItem[] = [
-  {
-    key: 'library',
-    to: '/soon/library',
-    label: COMING_SOON_COPY.library.title,
-    Icon: LibraryIcon,
-    comingSoon: true,
-  },
   {
     key: 'pronunciation',
     to: '/soon/pronunciation',

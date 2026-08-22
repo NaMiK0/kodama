@@ -8,7 +8,9 @@ import {
   fetchCollection,
   fetchDeck,
   fetchDecks,
+  updateDeck,
   type DeckCreatePayload,
+  type DeckUpdatePayload,
 } from './api'
 
 /**
@@ -60,6 +62,18 @@ export function useCreateDeck() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: DeckCreatePayload) => createDeck(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: DECKS_QUERY_KEY }),
+  })
+}
+
+// Переименование, смена уровня и перенос в папку (folder_id) — один и тот же
+// PATCH. Используется, в частности, «Переместить в папку» из Библиотеки:
+// отдельного «move»-эндпоинта на бэкенде нет, это просто патч поля.
+export function useUpdateDeck() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: DeckUpdatePayload }) =>
+      updateDeck(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DECKS_QUERY_KEY }),
   })
 }

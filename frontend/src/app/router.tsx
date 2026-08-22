@@ -9,6 +9,7 @@ import { SettingsPage } from '@/features/auth/ui/SettingsPage'
 import { CollectionPage } from '@/features/decks/ui/CollectionPage'
 import { DeckDetailPage } from '@/features/decks/ui/DeckDetailPage'
 import { DecksPage } from '@/features/decks/ui/DecksPage'
+import { LibraryPage } from '@/features/library/ui/LibraryPage'
 import { StatsPage } from '@/features/study/ui/StatsPage'
 import { StudySessionPage } from '@/features/study/ui/StudySessionPage'
 import { TriagePage } from '@/features/study/ui/TriagePage'
@@ -55,6 +56,8 @@ export function AppRouter() {
         >
           <Route path="/" element={<DecksPage />} />
           <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/library" element={<LibraryPage />} />
+          <Route path="/library/:folderId" element={<LibraryPage />} />
           <Route path="/decks/:deckId" element={<DeckDetailPage />} />
           <Route path="/decks/:deckId/triage" element={<TriagePage />} />
           <Route path="/study" element={<StudySessionPage />} />

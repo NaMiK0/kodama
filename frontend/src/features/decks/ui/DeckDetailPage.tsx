@@ -6,6 +6,7 @@ import { AddCardsModal } from '@/features/cards/ui/AddCardsModal'
 import { CardRow } from '@/features/cards/ui/CardRow'
 import { EditCardModal } from '@/features/cards/ui/EditCardModal'
 import { useCards, useDeleteCard } from '@/features/cards/hooks'
+import { MoveToFolderModal } from '@/features/library/ui/MoveToFolderModal'
 import { Button } from '@/shared/ui/Button'
 import { ConfirmModal } from '@/shared/ui/ConfirmModal'
 
@@ -26,6 +27,7 @@ export function DeckDetailPage() {
 
   const deleteDeck = useDeleteDeck()
   const [deckDeleteOpen, setDeckDeleteOpen] = useState(false)
+  const [moveOpen, setMoveOpen] = useState(false)
 
   if (deckPending || !deck) {
     return (
@@ -65,6 +67,9 @@ export function DeckDetailPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="danger-soft" onClick={() => setDeckDeleteOpen(true)}>
             Удалить колоду
+          </Button>
+          <Button variant="secondary" onClick={() => setMoveOpen(true)}>
+            Переместить в папку
           </Button>
           <Button variant="secondary" onClick={() => navigate(`/decks/${id}/triage`)}>
             Разобрать колоду
@@ -124,6 +129,10 @@ export function DeckDetailPage() {
         description={`«${deck.topic}» и все её карточки (${deck.card_count}) будут удалены без возможности восстановления.`}
         loading={deleteDeck.isPending}
       />
+
+      {moveOpen && (
+        <MoveToFolderModal open={moveOpen} onClose={() => setMoveOpen(false)} deck={deck} />
+      )}
     </div>
   )
 }

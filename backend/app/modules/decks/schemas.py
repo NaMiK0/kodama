@@ -18,6 +18,10 @@ class DeckCreate(BaseModel):
 class DeckUpdate(BaseModel):
     topic: str | None = Field(default=None, min_length=1, max_length=255)
     level: Level | None = None
+    # Отсутствие поля в теле запроса ≠ передача null: null переносит колоду
+    # в корень библиотеки, а отсутствие поля означает «не трогать папку».
+    # Различаем через model_fields_set в сервисе, не через сравнение с None.
+    folder_id: int | None = None
 
 class DeckRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -27,6 +31,7 @@ class DeckRead(BaseModel):
     language: Language
     level: Level
     source: DeckSource
+    folder_id: int | None
     created_at: datetime
     # Не колонка в БД — служба вычисляет одним запросом и прикрепляет
     # к ORM-объекту (deck.card_count = ...) перед возвратом.
