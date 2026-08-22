@@ -15,7 +15,7 @@ import { ForestPanel } from './ForestPanel'
  */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-dvh bg-forest lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:bg-canvas">
+    <div className="relative min-h-dvh overflow-hidden bg-forest lg:grid lg:min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:bg-canvas">
       {/* Мобильный фон: те же кольца, но за всем экраном */}
       <div className="lg:hidden">
         <EchoRipples />

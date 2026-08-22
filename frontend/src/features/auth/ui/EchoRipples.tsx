@@ -15,7 +15,10 @@ export function EchoRipples() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      // Без overflow-hidden: кольца обязаны выходить за пределы своего
+      // контейнера (в ForestPanel это средняя полоса, а не вся панель),
+      // а обрезает их предок — aside на десктопе, корень AuthLayout на мобильном.
+      className="pointer-events-none absolute inset-0 flex items-center justify-center"
     >
       {DELAYS.map((delay) => (
         <motion.span
