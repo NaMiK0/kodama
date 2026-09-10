@@ -44,7 +44,14 @@ class Settings(BaseSettings):
     # ── LLM / OpenRouter ──
     openrouter_api_key: str
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    llm_model: str = "inclusionai/ling-3.0-flash:free"
+    # Через запятую, по приоритету: первая модель — основная, дальше — фолбек
+    # на случай 429/недоступности (бесплатные модели на OpenRouter то и дело
+    # либо теряют :free-статус, либо временно перегружены у апстрим-провайдера).
+    llm_models: str = "nvidia/nemotron-3.5-lightning:free,nvidia/nemotron-3-super-120b-a12b:free,google/gemma-4-31b-it:free"
+
+    @property
+    def llm_model_list(self) -> list[str]:
+        return [model.strip() for model in self.llm_models.split(",") if model.strip()]
 
     # ── RabbitMQ ──
     rabbitmq_user: str
