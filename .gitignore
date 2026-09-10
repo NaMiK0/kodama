@@ -32,3 +32,7 @@ graphify-out
 node_modules/
 frontend/dist/
 frontend/build/
+
+# ── Рабочие заметки, не для публичного репозитория ────────
+frontend/public/landing/PROMPTS.md
+SPEC.md
