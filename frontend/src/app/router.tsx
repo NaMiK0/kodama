@@ -8,7 +8,6 @@ import { RequireGuest } from '@/features/auth/ui/RequireGuest'
 import { SettingsPage } from '@/features/auth/ui/SettingsPage'
 import { CollectionPage } from '@/features/decks/ui/CollectionPage'
 import { DeckDetailPage } from '@/features/decks/ui/DeckDetailPage'
-import { DecksPage } from '@/features/decks/ui/DecksPage'
 import { LibraryPage } from '@/features/library/ui/LibraryPage'
 import { StatsPage } from '@/features/study/ui/StatsPage'
 import { StudySessionPage } from '@/features/study/ui/StudySessionPage'
@@ -17,6 +16,7 @@ import { TokensPreview } from '@/shared/ui/TokensPreview'
 
 import { AppShell } from './AppShell'
 import { ComingSoonPage } from './ComingSoonPage'
+import { HomeRoute } from './HomeRoute'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -29,6 +29,11 @@ function Placeholder({ title }: { title: string }) {
 export function AppRouter() {
   return (
     <Routes>
+      {/* "/" сам решает, что показать: лендинг гостю или DecksPage вошедшему
+          (см. HomeRoute) — единственный маршрут вне RequireAuth/RequireGuest,
+          поэтому объявлен отдельно, до них. */}
+      <Route path="/" element={<HomeRoute />} />
+
       {/* Публичные: уже вошедшего уводим на приватную часть */}
       <Route element={<RequireGuest />}>
         <Route
@@ -54,7 +59,6 @@ export function AppRouter() {
             </AppShell>
           }
         >
-          <Route path="/" element={<DecksPage />} />
           <Route path="/collection" element={<CollectionPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/library/:folderId" element={<LibraryPage />} />
